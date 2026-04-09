@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VENV_NAME=LIH_training_venv
+VENV_NAME=Scynergy_venv
 
 if [ ! -d "$VENV_NAME" ]; then
     echo "Creating virtual environment..."

@@ -13,7 +13,6 @@
 module load env/release/2025.1
 module load Nsight-Systems
 module load Python
-source setup_environment.sh
 NUM_GPUS=4
 timestamp=$(date +"%Y-%m-%d-%H:%M:%S")
 export PROJECT_DIR=${PWD}
@@ -22,6 +21,7 @@ export PROFDIR=${PWD}/${timestamp}_nsys_output_basic_4g
 export MONAI_DATA_DIRECTORY=${PWD}/dataset_for_training
 export RANDOM_PORT=$(shuf -i 20000-65000 -n 1)
 export output_file="profile.%h.%p"
+source setup_environment.sh
 mkdir -p "$PROFDIR"
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)

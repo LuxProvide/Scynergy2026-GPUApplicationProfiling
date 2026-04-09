@@ -15,48 +15,44 @@ All rights reserved.
 import os
 import shutil
 import tempfile
-
 import matplotlib.pyplot as plt
 import PIL
 import torch
 import numpy as np
-
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import classification_report
-
+from sklearn.metrics import classification_report, roc_auc_score
 from monai.apps import download_and_extract
 from monai.config import print_config
-from monai.data import decollate_batch, DataLoader
-from monai.metrics import ROCAUCMetric
+from monai.data import decollate_batch, DataLoader, Dataset, CacheDataset
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
     Activations,
-    EnsureChannelFirst,
+    EnsureChannelFirstd,
     AsDiscrete,
     Compose,
-    LoadImage,
-    RandFlip,
-    RandRotate,
-    RandZoom,
-    ScaleIntensity,
+    LoadImaged,
+    ScaleIntensityd,
+    EnsureTyped,
+    RandAffine
 )
 from monai.utils import set_determinism
 import torch.distributed as dist
-
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
 from torch.distributed import default_pg_timeout
-from dataset_utils import build_mednist_index
+from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
+from visualization import show_example_images, write_convergence_plots
 from distribute_utils import init_distributed, cleanup, is_main_process
 from data_utils import get_data
+from torch.distributed.algorithms.ddp_comm_hooks import default_hooks
+
 
 
 def main():
-
     init_distributed()
     data_dir, root_dir = get_data()
 
     set_determinism(seed=0)
-
     (
         image_files_list,
         image_class,
@@ -67,33 +63,23 @@ def main():
     ) = build_mednist_index(data_dir)
 
 
-    from visualization import show_example_images
-
     show_example_images(
         image_files_list=image_files_list,
         image_class=image_class,
         class_names=class_names,
     )
 
-
     VAL_FRAC = 0.1
     TEST_FRAC = 0.1
-    LENGTH = len(image_files_list)
-    INDICES = np.arange(LENGTH)
-    np.random.shuffle(INDICES)
 
-    TEST_SPLIT = int(TEST_FRAC * LENGTH)
-    VAL_SPLIT = int(VAL_FRAC * LENGTH) + TEST_SPLIT
-    TEST_INDICES = INDICES[:TEST_SPLIT]
-    VAL_INDICES = INDICES[TEST_SPLIT:VAL_SPLIT]
-    TRAIN_INDICES = INDICES[VAL_SPLIT:]
+    train_x, train_y, val_x, val_y, test_x, test_y = split_dataset(
+        image_files_list,
+        image_class,
+        val_frac=VAL_FRAC,
+        test_frac=TEST_FRAC,
+        seed=42,
+    )
 
-    train_x = [image_files_list[i] for i in TRAIN_INDICES]
-    train_y = [image_class[i] for i in TRAIN_INDICES]
-    val_x = [image_files_list[i] for i in VAL_INDICES]
-    val_y = [image_class[i] for i in VAL_INDICES]
-    test_x = [image_files_list[i] for i in TEST_INDICES]
-    test_y = [image_class[i] for i in TEST_INDICES]
     if is_main_process():
         print(
             f"Training count: {len(train_x)}, Validation count: "
@@ -135,6 +121,7 @@ def main():
         num_workers=8,
     )
     train_ds = Dataset(data=train_cached)
+
     val_ds = Dataset(
         data=[{"img": x, "label": y} for x, y in zip(val_x, val_y)],
         transform=val_transforms,
@@ -275,8 +262,11 @@ def main():
         )
     if writer is not None:
         writer.close()
-    if is_main_process():
-        write_convergence_plots(epoch_loss_values, metric_values, VAL_INTERVAL)
+    write_convergence_plots(
+        epoch_loss_values=epoch_loss_values,
+        metric_values=metric_values,
+        VAL_INTERVAL=VAL_INTERVAL,
+    )
     if dist.is_initialized():
         dist.barrier()
     ckpt = torch.load(

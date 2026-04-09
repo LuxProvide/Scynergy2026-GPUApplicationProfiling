@@ -16,6 +16,7 @@ import os
 import tempfile
 import PIL
 import torch
+import torch.distributed as dist
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from monai.data import DataLoader
@@ -30,23 +31,19 @@ from monai.transforms import (
     ScaleIntensity,
 )
 from monai.utils import set_determinism
-import torch.distributed as dist
-from distribute_utils import init_distributed, cleanup, is_main_process
 from data_utils import get_data
-from dataset_utils import split_dataset
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 from sklearn.metrics import classification_report, roc_auc_score
-
-
+from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
+from visualization import show_example_images, write_convergence_plots
+from distribute_utils import init_distributed, cleanup, is_main_process
 
 def main():
     init_distributed()
     data_dir, root_dir = get_data()
 
     set_determinism(seed=0)
-
-    from dataset_utils import build_mednist_index
 
     (
         image_files_list,
@@ -57,7 +54,6 @@ def main():
         num_class,
     ) = build_mednist_index(data_dir)
 
-    from visualization import show_example_images
 
     show_example_images(
         image_files_list=image_files_list,
@@ -100,7 +96,6 @@ def main():
     )
 
 
-    from dataset_utils import MedNISTDataset
 
     train_ds = MedNISTDataset(train_x, train_y, train_transforms)
     val_ds = MedNISTDataset(val_x, val_y, val_transforms)
@@ -129,10 +124,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), 1e-5)
 
     MAX_EPOCHS = 1
-
     VAL_INTERVAL = 1
-
-
     best_metric = -1
     best_metric_epoch = -1
     epoch_loss_values = []
@@ -240,7 +232,6 @@ def main():
         writer.close()
 
 
-    from visualization import write_convergence_plots
 
 
     if is_main_process():
@@ -276,7 +267,6 @@ def main():
                 y_true.extend(test_labels.cpu().tolist())
                 y_pred.extend(pred.cpu().tolist())
 
-        from sklearn.metrics import classification_report
         print(classification_report(y_true, y_pred, target_names=class_names))
 
 

@@ -12,10 +12,10 @@
 
 module load env/release/2025.1
 module load Python
-source setup_environment.sh
 export PROJECT_DIR=${PWD}
 export OMP_NUM_THREADS=1
 export MONAI_DATA_DIRECTORY=${PWD}/dataset_for_training
+source setup_environment.sh
 
 srun --cpu-bind=cores -N1 --gpus=1 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
     torchrun \

@@ -35,9 +35,9 @@ from monai.transforms import (
 )
 from monai.utils import set_determinism
 from data_utils import get_data
-
-from dataset_utils import build_mednist_index
-from dataset_utils import split_dataset
+from dataset_utils import build_mednist_index, split_dataset, MedNISTDataset
+from visualization import show_example_images, write_convergence_plots
+from sklearn.metrics import classification_report
 
 
 def main():
@@ -53,8 +53,6 @@ def main():
         image_size,
         num_class,
     ) = build_mednist_index(data_dir)
-
-    from visualization import show_example_images
 
     show_example_images(
         image_files_list=image_files_list,
@@ -93,8 +91,6 @@ def main():
     y_pred_trans = Compose([Activations(softmax=True)])
     y_trans = Compose([AsDiscrete(to_onehot=num_class)])
 
-
-    from dataset_utils import MedNISTDataset
     train_ds = MedNISTDataset(train_x, train_y, train_transforms)
     val_ds = MedNISTDataset(val_x, val_y, val_transforms)
     test_ds = MedNISTDataset(test_x, test_y, val_transforms)
@@ -118,6 +114,8 @@ def main():
     epoch_loss_values = []
     metric_values = []
     writer = SummaryWriter()
+
+    ckpt_path = os.path.join(root_dir, "best_metric_model.pth")
 
     for epoch in range(MAX_EPOCHS):
         print("-" * 10)
@@ -169,9 +167,7 @@ def main():
                 if result > best_metric:
                     best_metric = result
                     best_metric_epoch = epoch + 1
-                    torch.save(
-                        model.state_dict(), os.path.join(root_dir, "best_metric_model.pth")
-                    )
+                    torch.save(model.state_dict(), ckpt_path)
                     print("saved new best metric model")
                 print(
                     f"current epoch: {epoch + 1} current AUC: {result:.4f}"
@@ -185,18 +181,16 @@ def main():
     )
     writer.close()
 
-
-    from visualization import write_convergence_plots
-
     write_convergence_plots(
         epoch_loss_values=epoch_loss_values,
         metric_values=metric_values,
         VAL_INTERVAL=VAL_INTERVAL,
     )
+    if os.path.exists(ckpt_path):
+        model.load_state_dict(torch.load(ckpt_path, weights_only=True))
+    else:
+        print(f"Checkpoint not found yet: {ckpt_path}")
 
-    model.load_state_dict(
-        torch.load(os.path.join(root_dir, "best_metric_model.pth"), weights_only=True)
-    )
     model.eval()
     print("Testing the trained model")
     y_true = []
@@ -212,7 +206,6 @@ def main():
                 y_true.append(test_labels[i].item())
                 y_pred.append(pred[i].item())
 
-    from sklearn.metrics import classification_report
     print(classification_report(y_true, y_pred, target_names=class_names))
 
 

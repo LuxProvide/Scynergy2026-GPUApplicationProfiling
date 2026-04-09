@@ -27,7 +27,6 @@ mkdir -p "$PROFDIR"
 head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
 endpoint="${head_node_ip}:${RANDOM_PORT}"
-cd "$PROFDIR"
 srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
      nsys profile \
          --cuda-memory-usage=true \

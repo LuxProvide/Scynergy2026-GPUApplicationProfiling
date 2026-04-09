@@ -14,7 +14,7 @@ else
     source "$VENV_NAME/bin/activate"
 fi
 pip install --upgrade pip
-check_that_packages_are_installed="false"
+check_that_packages_are_installed="true"
 if [ "$check_that_packages_are_installed" = "true" ]; then
     packages=("monai-weekly[pillow,tqdm]" "matplotlib" "tensorboard" "scikit-learn" "numpy" "requests" "torchvision")
 

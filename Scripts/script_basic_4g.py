@@ -13,12 +13,32 @@ All rights reserved.
 """
 
 import os
-import tempfile
-import PIL
 import torch
+
+USE_PROFILER = os.getenv("USE_PROFILER", "false").lower() in ("true", "1")
+
+if USE_PROFILER:
+    import torch.cuda.profiler as profiler
+    import torch.cuda.nvtx as nvtx
+else:
+    class MockProfiler:
+        @staticmethod
+        def start(): pass
+        @staticmethod
+        def stop(): pass
+    class MockNVTX:
+        @staticmethod
+        def range_push(name): pass
+        @staticmethod
+        def range_pop(): pass
+    profiler = MockProfiler()
+    nvtx = MockNVTX()
+
 import torch.distributed as dist
 import numpy as np
+from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
+from sklearn.metrics import classification_report, roc_auc_score
 from monai.data import DataLoader
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
@@ -31,13 +51,13 @@ from monai.transforms import (
     ScaleIntensity,
 )
 from monai.utils import set_determinism
-from data_utils import get_data
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
-from sklearn.metrics import classification_report, roc_auc_score
-from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
-from visualization import show_example_images, write_convergence_plots
+from data_utils import get_data
 from distribute_utils import init_distributed, cleanup, is_main_process
+from dataset_utils import build_mednist_index, MedNISTDataset
+from visualization import show_example_images, write_convergence_plots
+
+
 
 def main():
     init_distributed()
@@ -55,6 +75,8 @@ def main():
     ) = build_mednist_index(data_dir)
 
 
+
+
     show_example_images(
         image_files_list=image_files_list,
         image_class=image_class,
@@ -64,14 +86,23 @@ def main():
 
     VAL_FRAC = 0.1
     TEST_FRAC = 0.1
+    LENGTH = len(image_files_list)
+    INDICES = np.arange(LENGTH)
+    np.random.shuffle(INDICES)
 
-    train_x, train_y, val_x, val_y, test_x, test_y = split_dataset(
-        image_files_list,
-        image_class,
-        val_frac=VAL_FRAC,
-        test_frac=TEST_FRAC,
-        seed=42,
-    )
+    TEST_SPLIT = int(TEST_FRAC * LENGTH)
+    VAL_SPLIT = int(VAL_FRAC * LENGTH) + TEST_SPLIT
+    TEST_INDICES = INDICES[:TEST_SPLIT]
+    VAL_INDICES = INDICES[TEST_SPLIT:VAL_SPLIT]
+    TRAIN_INDICES = INDICES[VAL_SPLIT:]
+
+    train_x = [image_files_list[i] for i in TRAIN_INDICES]
+    train_y = [image_class[i] for i in TRAIN_INDICES]
+    val_x = [image_files_list[i] for i in VAL_INDICES]
+    val_y = [image_class[i] for i in VAL_INDICES]
+    test_x = [image_files_list[i] for i in TEST_INDICES]
+    test_y = [image_class[i] for i in TEST_INDICES]
+
 
     if is_main_process():
         print(
@@ -96,7 +127,6 @@ def main():
     )
 
 
-
     train_ds = MedNISTDataset(train_x, train_y, train_transforms)
     val_ds = MedNISTDataset(val_x, val_y, val_transforms)
     test_ds = MedNISTDataset(test_x, test_y, val_transforms)
@@ -111,6 +141,8 @@ def main():
         sampler=train_sampler,
         num_workers=0,
     )
+
+
     val_loader = DataLoader(val_ds, batch_size=300, num_workers=0)
     test_loader = DataLoader(test_ds, batch_size=300, num_workers=0)
 
@@ -123,38 +155,58 @@ def main():
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), 1e-5)
 
-   
     MAX_EPOCHS = int(os.getenv("MAX_EPOCHS", "1"))
     VAL_INTERVAL = int(os.getenv("VAL_INTERVAL", "1"))
+
     best_metric = -1
     best_metric_epoch = -1
     epoch_loss_values = []
     metric_values = []
     writer = SummaryWriter() if is_main_process() else None
 
+
+    current_epoch = 0
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
+        nvtx.range_push(f"epoch_{epoch + 1}")
         if is_main_process():
+            current_epoch = current_epoch + 1
             print("-" * 10)
             print(f"epoch {epoch + 1}/{MAX_EPOCHS}")
+            if current_epoch == 1:
+                profiler.start()
+        nvtx.range_push("training")
         model.train()
+        nvtx.range_pop()
         epoch_loss = 0
         step = 0
         for batch_data in train_loader:
+            nvtx.range_push("training_step")
             step += 1
             inputs, labels = batch_data[0].to(device), batch_data[1].to(device)
+            nvtx.range_push("forward_backward")
             optimizer.zero_grad()
+            nvtx.range_pop()
+            nvtx.range_push("model_inference")
             outputs = model(inputs)
+            nvtx.range_pop()
+            nvtx.range_push("loss_computation")
             loss = loss_function(outputs, labels)
+            nvtx.range_pop()
+            nvtx.range_push("backward_pass")
             loss.backward()
+            nvtx.range_pop()
+            nvtx.range_push("optimizer_step")
             optimizer.step()
+            nvtx.range_pop()
             epoch_loss += loss.item()
             if is_main_process():
                 print(f"{step}/{len(train_loader)}, " f"train_loss: {loss.item():.4f}")
             epoch_len = len(train_loader)
             if writer is not None:
                 writer.add_scalar("train_loss", loss.item(), epoch_len * epoch + step)
+            nvtx.range_pop()
         epoch_loss /= step
         epoch_loss_values.append(epoch_loss)
         if is_main_process():
@@ -163,6 +215,7 @@ def main():
         if (epoch + 1) % VAL_INTERVAL == 0:
             if is_main_process():
                 print(f"Epoch {epoch + 1}: validation phase")
+                nvtx.range_push("validation")
 
                 eval_model = model.module if dist.is_initialized() else model
                 eval_model.eval()
@@ -219,9 +272,14 @@ def main():
                     if writer is not None:
                         writer.add_scalar("val_accuracy", acc_metric, epoch + 1)
 
+                nvtx.range_pop()
+
             if dist.is_initialized():
                 dist.barrier()
 
+        nvtx.range_pop()
+        if is_main_process() and current_epoch == 1:
+            profiler.stop()
 
     if is_main_process():
         print(
@@ -231,7 +289,9 @@ def main():
     if writer is not None:
         writer.close()
 
+
     if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
+
         if is_main_process():
             write_convergence_plots(
                 epoch_loss_values=epoch_loss_values,
@@ -250,8 +310,9 @@ def main():
 
             print(classification_report(y_true, y_pred, target_names=class_names))
 
-
     cleanup()
+
+
 
 if __name__ == "__main__":
     main()

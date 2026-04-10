@@ -14,8 +14,26 @@ All rights reserved.
 
 import os
 import torch
-import torch.cuda.profiler as profiler
-import torch.cuda.nvtx as nvtx
+
+USE_PROFILER = os.getenv("USE_PROFILER", "false").lower() in ("true", "1")
+
+if USE_PROFILER:
+    import torch.cuda.profiler as profiler
+    import torch.cuda.nvtx as nvtx
+else:
+    class MockProfiler:
+        @staticmethod
+        def start(): pass
+        @staticmethod
+        def stop(): pass
+    class MockNVTX:
+        @staticmethod
+        def range_push(name): pass
+        @staticmethod
+        def range_pop(): pass
+    profiler = MockProfiler()
+    nvtx = MockNVTX()
+
 import numpy as np
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter

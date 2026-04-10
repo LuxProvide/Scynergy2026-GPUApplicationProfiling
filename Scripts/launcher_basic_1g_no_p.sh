@@ -19,4 +19,4 @@ srun --cpu-bind=cores -N1 --gpus=1 --ntasks-per-node=1 --kill-on-bad-exit=1 bash
     torchrun \
     --nproc_per_node 1 \
     --log_dir ${PROJECT_DIR}/log_torch \
-    ${PROJECT_DIR}/script_basic_1g_no_p.py"
+    ${PROJECT_DIR}/script_basic_1g.py"

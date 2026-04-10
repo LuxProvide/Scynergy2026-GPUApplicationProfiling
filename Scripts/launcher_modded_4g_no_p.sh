@@ -26,4 +26,4 @@ srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash
     --rdzv_backend c10d \
     --rdzv_endpoint $endpoint \
     --log_dir ${PROJECT_DIR}/log_torch \
-    ${PROJECT_DIR}/script_modded_4g_no_p.py"
+    ${PROJECT_DIR}/script_modded_4g.py"

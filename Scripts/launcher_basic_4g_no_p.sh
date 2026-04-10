@@ -18,8 +18,7 @@ export USE_PROFILER="false"
 export USE_DISTRIBUTED="true"
 source setup_environment.sh
 
-srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
-    torchrun \
+TORCHRUN_COMMAND="torchrun \
     --nnodes ${SLURM_NNODES} \
     --nproc_per_node ${NUM_GPUS} \
     --rdzv_id 10000 \
@@ -27,3 +26,7 @@ srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash
     --rdzv_endpoint $endpoint \
     --log_dir ${PROJECT_DIR}/log_torch \
     ${PROJECT_DIR}/script_basic_4g.py"
+
+srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
+    ${TORCHRUN_COMMAND}"
+    

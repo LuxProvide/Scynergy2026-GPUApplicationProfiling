@@ -14,9 +14,13 @@ module load env/release/2025.1
 module load Python
 source setup_environment.sh
 export OMP_NUM_THREADS=1
+export NUM_GPUS=1
 
-srun --cpu-bind=cores -N1 --gpus=1 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
-    torchrun \
-    --nproc_per_node 1 \
+TORCHRUN_COMMAND="torchrun \
+    --nnodes ${SLURM_NNODES} \
+    --nproc_per_node ${NUM_GPUS} \
     --log_dir ${PROJECT_DIR}/log_torch \
     ${PROJECT_DIR}/script_basic_1g.py"
+
+srun --cpu-bind=cores -N1 --gpus=1 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
+    ${TORCHRUN_COMMAND}"

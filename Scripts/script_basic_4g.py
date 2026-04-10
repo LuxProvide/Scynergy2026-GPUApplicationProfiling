@@ -56,7 +56,7 @@ from data_utils import get_data
 from distribute_utils import init_distributed, cleanup, is_main_process
 from dataset_utils import build_mednist_index, MedNISTDataset
 from visualization import show_example_images, write_convergence_plots
-
+from dataset_utils import build_mednist_index, split_dataset
 
 
 def main():
@@ -75,40 +75,24 @@ def main():
     ) = build_mednist_index(data_dir)
 
 
-
-
-    show_example_images(
-        image_files_list=image_files_list,
-        image_class=image_class,
-        class_names=class_names,
-    )
+    # show_example_images(
+    #     image_files_list=image_files_list,
+    #     image_class=image_class,
+    #     class_names=class_names,
+    # )
 
 
     VAL_FRAC = 0.1
     TEST_FRAC = 0.1
-    LENGTH = len(image_files_list)
-    INDICES = np.arange(LENGTH)
-    np.random.shuffle(INDICES)
+   
 
-    TEST_SPLIT = int(TEST_FRAC * LENGTH)
-    VAL_SPLIT = int(VAL_FRAC * LENGTH) + TEST_SPLIT
-    TEST_INDICES = INDICES[:TEST_SPLIT]
-    VAL_INDICES = INDICES[TEST_SPLIT:VAL_SPLIT]
-    TRAIN_INDICES = INDICES[VAL_SPLIT:]
-
-    train_x = [image_files_list[i] for i in TRAIN_INDICES]
-    train_y = [image_class[i] for i in TRAIN_INDICES]
-    val_x = [image_files_list[i] for i in VAL_INDICES]
-    val_y = [image_class[i] for i in VAL_INDICES]
-    test_x = [image_files_list[i] for i in TEST_INDICES]
-    test_y = [image_class[i] for i in TEST_INDICES]
-
-
-    if is_main_process():
-        print(
-            f"Training count: {len(train_x)}, Validation count: "
-            f"{len(val_x)}, Test count: {len(test_x)}"
-        )
+    train_x, train_y, val_x, val_y, test_x, test_y = split_dataset(
+        image_files_list,
+        image_class,
+        val_frac=VAL_FRAC,
+        test_frac=TEST_FRAC,
+        seed=42,
+    )
 
 
     train_transforms = Compose(
@@ -142,10 +126,8 @@ def main():
         num_workers=0,
     )
 
-
     val_loader = DataLoader(val_ds, batch_size=300, num_workers=0)
     test_loader = DataLoader(test_ds, batch_size=300, num_workers=0)
-
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DenseNet121(spatial_dims=2, in_channels=1, out_channels=num_class).to(device)

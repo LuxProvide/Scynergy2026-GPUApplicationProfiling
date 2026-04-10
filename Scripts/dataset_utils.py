@@ -87,13 +87,7 @@ def build_mednist_index(data_dir, verbose: bool = True):
     # Read image size from first image
     image_width, image_height = PIL.Image.open(image_files_list[0]).size
 
-    if verbose:
-        print(f"Total image count: {num_total}")
-        print(f"Image dimensions: {image_width} x {image_height}")
-        print(f"Label names: {class_names}")
-        print(f"Label counts: {num_each}")
-
-    if is_main_process():
+    if verbose and is_main_process():
         print(f"Total image count: {num_total}")
         print(f"Image dimensions: {image_width} x {image_height}")
         print(f"Label names: {class_names}")

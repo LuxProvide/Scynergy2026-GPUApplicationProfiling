@@ -75,11 +75,12 @@ def main():
 
 
 
-    show_example_images(
-        image_files_list=image_files_list,
-        image_class=image_class,
-        class_names=class_names,
-    )
+    if is_main_process():
+        show_example_images(
+            image_files_list=image_files_list,
+            image_class=image_class,
+            class_names=class_names,
+        )
 
     VAL_FRAC = 0.1
     TEST_FRAC = 0.1
@@ -91,12 +92,6 @@ def main():
         test_frac=TEST_FRAC,
         seed=42,
     )
-
-    if is_main_process():
-        print(
-            f"Training count: {len(train_x)}, Validation count: "
-            f"{len(val_x)}, Test count: {len(test_x)}"
-        )
 
     val_transforms = Compose(
         [
@@ -131,6 +126,7 @@ def main():
         transform=cpu_transforms,
         cache_rate=1.0,
         num_workers=8,
+        progress=is_main_process(),
     )
     train_ds = Dataset(data=train_cached)
 

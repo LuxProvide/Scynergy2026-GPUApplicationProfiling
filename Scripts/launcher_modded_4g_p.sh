@@ -19,8 +19,7 @@ export USE_DISTRIBUTED="true"
 source setup_environment.sh
 export PYTHONUNBUFFERED=1
 
-NSYS_OPTIONS="
-    --cuda-memory-usage=true \
+NSYS_OPTIONS="--cuda-memory-usage=true \
     --capture-range=cudaProfilerApi \
     --capture-range-end=stop \
     --output=${output_file} \
@@ -38,7 +37,7 @@ TORCHRUN_COMMAND="torchrun \
 srun --cpu-bind=cores -N1 --gpus=4 \
         --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
         nsys profile \
-        ${NSYS_OPTIONS} \ 
+        ${NSYS_OPTIONS} \
         ${TORCHRUN_COMMAND}"
 
         

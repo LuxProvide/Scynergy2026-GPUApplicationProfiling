@@ -75,12 +75,12 @@ def main():
 
 
 
-    if is_main_process():
-        show_example_images(
-            image_files_list=image_files_list,
-            image_class=image_class,
-            class_names=class_names,
-        )
+    # if is_main_process():
+    #     show_example_images(
+    #         image_files_list=image_files_list,
+    #         image_class=image_class,
+    #         class_names=class_names,
+    #     )
 
     VAL_FRAC = 0.1
     TEST_FRAC = 0.1
@@ -101,9 +101,6 @@ def main():
             EnsureTyped(keys="img", track_meta=False),
         ]
     )
-
-    y_pred_trans = Compose([Activations(softmax=True)])
-    y_trans = Compose([AsDiscrete(to_onehot=num_class)])
 
     cpu_transforms = Compose(
         [
@@ -140,20 +137,24 @@ def main():
     )
 
     train_sampler = DistributedSampler(train_ds) if dist.is_initialized() else None
+    
+    BATCH_SIZE = int(os.getenv("BATCH_SIZE", 100))
+    NUM_WORKERS = int(os.getenv("NUM_WORKERS", 8))
+    PREFETCH_FACTOR = int(os.getenv("PRE_FETCH_FACTOR", 2))
 
     train_loader = DataLoader(
         train_ds,
-        batch_size=100,
+        batch_size=BATCH_SIZE,
         shuffle=(train_sampler is None),
         sampler=train_sampler,
-        num_workers=8,
+        num_workers=NUM_WORKERS,
         pin_memory=True,
         persistent_workers=True,
-        prefetch_factor=2,
+        prefetch_factor=PREFETCH_FACTOR,
     )
 
-    val_loader = DataLoader(val_ds, batch_size=100, num_workers=8, pin_memory=True)
-    test_loader = DataLoader(test_ds, batch_size=100, num_workers=8, pin_memory=True)
+    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, pin_memory=True)
+    test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, pin_memory=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = DenseNet121(spatial_dims=2, in_channels=1, out_channels=num_class).to(
@@ -176,16 +177,15 @@ def main():
     metric_values = []
     writer = SummaryWriter() if is_main_process() else None
     current_epoch = 0
+
+    profiler.start()
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         nvtx.range_push(f"epoch_{epoch + 1}")
         if is_main_process():
-            current_epoch = current_epoch + 1
             print("-" * 10)
             print(f"epoch {epoch + 1}/{MAX_EPOCHS}")
-            if current_epoch == 1:
-                profiler.start()
         nvtx.range_push("training")
         model.train()
         nvtx.range_pop()
@@ -219,15 +219,23 @@ def main():
             scaler.step(optimizer)
             nvtx.range_pop()
             scaler.update()
-            if is_main_process():
-                print(
-                    f"{step}/{len(train_ds) // train_loader.batch_size}, "
-                    f"train_loss: {loss.item():.4f}"
-                )
-            epoch_len = len(train_ds) // train_loader.batch_size
+
+            # Aggregate loss from all ranks
+            dist_loss = loss.clone().detach()
+            if dist.is_initialized():
+                dist.all_reduce(dist_loss, op=dist.ReduceOp.SUM)
+                dist_loss /= dist.get_world_size()
+
+            rank = dist.get_rank() if dist.is_initialized() else 0
+            print(
+                f"[Rank {rank}] Step {step}/{len(train_loader)} - loss: {loss.item():.4f} (avg: {dist_loss.item():.4f})"
+            )
+
+            epoch_len = len(train_loader)
             if writer is not None:
-                writer.add_scalar("train_loss", loss.item(), epoch_len * epoch + step)
+                writer.add_scalar("train_loss", dist_loss.item(), epoch_len * epoch + step)
             nvtx.range_pop()
+
         epoch_loss /= step
         epoch_loss_values.append(epoch_loss)
         if is_main_process():
@@ -295,7 +303,6 @@ def main():
     if writer is not None:
         writer.close()
     profiler.stop()
-
 
     if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
         from evaluate_trained_model_utils import test_best_checkpoint

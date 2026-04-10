@@ -263,8 +263,7 @@ def main():
                 dist.barrier()
 
         nvtx.range_pop()
-        if USE_PROFILER:
-            profiler.stop()
+        profiler.stop()
 
     if is_main_process():
         print(

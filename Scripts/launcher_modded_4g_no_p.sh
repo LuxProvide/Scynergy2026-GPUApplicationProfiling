@@ -18,6 +18,10 @@ export USE_PROFILER="false"
 export USE_DISTRIBUTED="true"
 source setup_environment.sh
 
+export BATCH_SIZE=100
+export NUM_WORKERS=8
+export PRE_FETCH_FACTOR=2
+
 TORCHRUN_COMMAND="torchrun \
     --nnodes ${SLURM_NNODES} \
     --nproc_per_node ${NUM_GPUS} \
@@ -29,4 +33,13 @@ TORCHRUN_COMMAND="torchrun \
 
 srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
     ${TORCHRUN_COMMAND}"
+
+srun \
+  --ntasks-per-node=1 \
+  --gpus-per-task=4 \
+  --cpus-per-task=8 \
+  --hint=nomultithread \
+  --gpu-bind=map_gpu:0,1,2,3 \
+  --cpu-bind=cores \
+  --mem-bind=local bash -c "${TORCHRUN_COMMAND}"
    

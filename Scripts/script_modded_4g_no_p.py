@@ -13,17 +13,11 @@ All rights reserved.
 """
 
 import os
-import shutil
-import tempfile
-import matplotlib.pyplot as plt
-import PIL
 import torch
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import classification_report, roc_auc_score
-from monai.apps import download_and_extract
-from monai.config import print_config
-from monai.data import decollate_batch, DataLoader, Dataset, CacheDataset
+from monai.data import DataLoader, Dataset, CacheDataset
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
     Activations,
@@ -39,8 +33,7 @@ from monai.utils import set_determinism
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-from torch.distributed import default_pg_timeout
-from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
+from dataset_utils import build_mednist_index, split_dataset
 from visualization import show_example_images, write_convergence_plots
 from distribute_utils import init_distributed, cleanup, is_main_process
 from data_utils import get_data
@@ -285,24 +278,25 @@ def main():
         weights_only=True,
     )
 
-    eval_model.load_state_dict(ckpt)
-    eval_model.eval()
+    if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
+        if is_main_process():
+            write_convergence_plots(
+                epoch_loss_values=epoch_loss_values,
+                metric_values=metric_values,
+                VAL_INTERVAL=VAL_INTERVAL,
+            )
 
-    if is_main_process():
-        print("Testing the trained model", flush=True)
-        y_true = []
-        y_pred = []
+            from evaluate_trained_model_utils import test_best_checkpoint
+            y_true, y_pred = test_best_checkpoint(
+                eval_model=model,
+                test_loader=test_loader,
+                root_dir=root_dir,
+                device=device,
+                is_main_process=lambda: True,  # Not running distributed, so always main process
+            )
 
-        with torch.no_grad():
-            for test_data in test_loader:
-                test_images = test_data["img"].to(device, non_blocking=True)
-                test_labels = test_data["label"].to(device, non_blocking=True)
-                pred = eval_model(test_images).argmax(dim=1)
-                y_true.extend(test_labels.cpu().tolist())
-                y_pred.extend(pred.cpu().tolist())
+            print(classification_report(y_true, y_pred, target_names=class_names))
 
-    if dist.is_initialized():
-        dist.barrier()
 
     cleanup()
 

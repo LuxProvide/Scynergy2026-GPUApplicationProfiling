@@ -13,10 +13,6 @@ All rights reserved.
 """
 
 import os
-import shutil
-import tempfile
-import matplotlib.pyplot as plt
-import PIL
 import torch
 import torch.distributed as dist
 import torch.cuda.profiler as profiler
@@ -25,14 +21,10 @@ import numpy as np
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import classification_report, roc_auc_score
-from monai.apps import download_and_extract
-from monai.config import print_config
-from monai.data import decollate_batch, DataLoader
+from monai.data import DataLoader
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
-    Activations,
     EnsureChannelFirst,
-    AsDiscrete,
     Compose,
     LoadImage,
     RandFlip,
@@ -44,7 +36,7 @@ from monai.utils import set_determinism
 from torch.nn.parallel import DistributedDataParallel as DDP
 from data_utils import get_data
 from distribute_utils import init_distributed, cleanup, is_main_process
-from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
+from dataset_utils import build_mednist_index, MedNISTDataset
 from visualization import show_example_images, write_convergence_plots
 
 
@@ -280,52 +272,25 @@ def main():
         writer.close()
 
 
-    # plt.figure("train", (12, 6))
-    # plt.subplot(1, 2, 1)
-    # plt.title("Epoch Average Loss")
-    # x = [i + 1 for i in range(len(epoch_loss_values))]
-    # y = epoch_loss_values
-    # plt.xlabel("epoch")
-    # plt.plot(x, y)
-    # plt.subplot(1, 2, 2)
-    # plt.title("Val AUC")
-    # x = [VAL_INTERVAL * (i + 1) for i in range(len(metric_values))]
-    # y = metric_values
-    # plt.xlabel("epoch")
-    # plt.plot(x, y)
-    # plt.show()
+    if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
 
-    write_convergence_plots(
-        epoch_loss_values=epoch_loss_values,
-        metric_values=metric_values,
-        VAL_INTERVAL=VAL_INTERVAL,
-    )
-    if is_main_process():
-        ckpt_path = os.path.join(root_dir, "best_metric_model.pth")
-        assert os.path.exists(ckpt_path), f"Checkpoint not found: {ckpt_path}"
+        if is_main_process():
+            write_convergence_plots(
+                epoch_loss_values=epoch_loss_values,
+                metric_values=metric_values,
+                VAL_INTERVAL=VAL_INTERVAL,
+            )
 
-        eval_model = model.module if dist.is_initialized() else model
+            from evaluate_trained_model_utils import test_best_checkpoint
+            y_true, y_pred = test_best_checkpoint(
+                eval_model=model,
+                test_loader=test_loader,
+                root_dir=root_dir,
+                device=device,
+                is_main_process=lambda: True,  # Not running distributed, so always main process
+            )
 
-        state_dict = torch.load(
-            ckpt_path,
-            map_location=device,
-            weights_only=True,
-        )
-        eval_model.load_state_dict(state_dict)
-        eval_model.eval()
-
-        print("Testing the trained model", flush=True)
-
-        y_true = []
-        y_pred = []
-
-        with torch.no_grad():
-            for test_data in test_loader:
-                test_images = test_data[0].to(device)
-                test_labels = test_data[1].to(device)
-                pred = eval_model(test_images).argmax(dim=1)
-                y_true.extend(test_labels.cpu().tolist())
-                y_pred.extend(pred.cpu().tolist())
+            print(classification_report(y_true, y_pred, target_names=class_names))
 
     cleanup()
 

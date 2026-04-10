@@ -281,47 +281,27 @@ def main():
     if writer is not None:
         writer.close()
     profiler.stop()
-    write_convergence_plots(
-        epoch_loss_values=epoch_loss_values,
-        metric_values=metric_values,
-        VAL_INTERVAL=VAL_INTERVAL,
-    )
-    if dist.is_initialized():
-        dist.barrier()
-    ckpt = torch.load(
-        os.path.join(root_dir, "best_metric_model.pth"), weights_only=True
-    )
-    eval_model.load_state_dict(ckpt)
-    eval_model.eval()
-    if is_main_process():
-        print("Testing the trained model", flush=True)
-    if dist.is_initialized():
-        dist.barrier()
 
-    ckpt = torch.load(
-        os.path.join(root_dir, "best_metric_model.pth"),
-        map_location=device,
-        weights_only=True,
-    )
 
-    eval_model.load_state_dict(ckpt)
-    eval_model.eval()
+    if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
+        from evaluate_trained_model_utils import test_best_checkpoint
+        if is_main_process():
+            write_convergence_plots(
+                epoch_loss_values=epoch_loss_values,
+                metric_values=metric_values,
+                VAL_INTERVAL=VAL_INTERVAL,
+            )
 
-    if is_main_process():
-        print("Testing the trained model", flush=True)
-        y_true = []
-        y_pred = []
+            from evaluate_trained_model_utils import test_best_checkpoint
+            y_true, y_pred = test_best_checkpoint(
+                eval_model=model,
+                test_loader=test_loader,
+                root_dir=root_dir,
+                device=device,
+                is_main_process=lambda: True,  # Not running distributed, so always main process
+            )
 
-        with torch.no_grad():
-            for test_data in test_loader:
-                test_images = test_data["img"].to(device, non_blocking=True)
-                test_labels = test_data["label"].to(device, non_blocking=True)
-                pred = eval_model(test_images).argmax(dim=1)
-                y_true.extend(test_labels.cpu().tolist())
-                y_pred.extend(pred.cpu().tolist())
-
-    if dist.is_initialized():
-        dist.barrier()
+            print(classification_report(y_true, y_pred, target_names=class_names))
 
     cleanup()
 

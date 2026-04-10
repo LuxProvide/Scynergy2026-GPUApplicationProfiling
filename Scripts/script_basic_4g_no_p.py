@@ -132,7 +132,6 @@ def main():
     metric_values = []
     writer = SummaryWriter() if is_main_process() else None
 
-
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
@@ -232,43 +231,24 @@ def main():
     if writer is not None:
         writer.close()
 
+    if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
+        if is_main_process():
+            write_convergence_plots(
+                epoch_loss_values=epoch_loss_values,
+                metric_values=metric_values,
+                VAL_INTERVAL=VAL_INTERVAL,
+            )
 
+            from evaluate_trained_model_utils import test_best_checkpoint
+            y_true, y_pred = test_best_checkpoint(
+                eval_model=model,
+                test_loader=test_loader,
+                root_dir=root_dir,
+                device=device,
+                is_main_process=lambda: True,  # Not running distributed, so always main process
+            )
 
-
-    if is_main_process():
-        write_convergence_plots(
-            epoch_loss_values=epoch_loss_values,
-            metric_values=metric_values,
-            VAL_INTERVAL=VAL_INTERVAL,
-        )
-
-        ckpt_path = os.path.join(root_dir, "best_metric_model.pth")
-        assert os.path.exists(ckpt_path), f"Checkpoint not found: {ckpt_path}"
-
-        eval_model = model.module if dist.is_initialized() else model
-
-        state_dict = torch.load(
-            ckpt_path,
-            map_location=device,
-            weights_only=True,
-        )
-        eval_model.load_state_dict(state_dict)
-        eval_model.eval()
-
-        print("Testing the trained model", flush=True)
-
-        y_true = []
-        y_pred = []
-
-        with torch.no_grad():
-            for test_data in test_loader:
-                test_images = test_data[0].to(device)
-                test_labels = test_data[1].to(device)
-                pred = eval_model(test_images).argmax(dim=1)
-                y_true.extend(test_labels.cpu().tolist())
-                y_pred.extend(pred.cpu().tolist())
-
-        print(classification_report(y_true, y_pred, target_names=class_names))
+            print(classification_report(y_true, y_pred, target_names=class_names))
 
 
     cleanup()

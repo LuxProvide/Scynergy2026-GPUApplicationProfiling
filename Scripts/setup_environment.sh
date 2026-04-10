@@ -89,6 +89,7 @@ fi
 
 export MAX_EPOCHS=1
 export VAL_INTERVAL=1
+export PERFORM_MODEL_EVALUATION="false"
 echo "the number of epochs is set to ${MAX_EPOCHS} and the validation interval is set to ${VAL_INTERVAL}"
 
 echo "Environment setup complete."

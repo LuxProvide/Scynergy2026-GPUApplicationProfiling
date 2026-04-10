@@ -14,7 +14,7 @@ module load env/release/2025.1
 module load Python
 NUM_GPUS=4
 export case_name="modded_4g_no_p"
-export USE_PROFILER="false"
+export USE_PROFILER="true"
 export USE_DISTRIBUTED="true"
 source setup_environment.sh
 export PYTHONUNBUFFERED=1

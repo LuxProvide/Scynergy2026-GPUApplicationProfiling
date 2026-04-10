@@ -182,33 +182,24 @@ def main():
     )
     writer.close()
 
-    write_convergence_plots(
-        epoch_loss_values=epoch_loss_values,
-        metric_values=metric_values,
-        VAL_INTERVAL=VAL_INTERVAL,
-    )
-    if os.path.exists(ckpt_path):
-        model.load_state_dict(torch.load(ckpt_path, weights_only=True))
-    else:
-        print(f"Checkpoint not found yet: {ckpt_path}")
+    if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":
 
-    model.eval()
-    print("Testing the trained model")
-    y_true = []
-    y_pred = []
-    with torch.no_grad():
-        for test_data in test_loader:
-            test_images, test_labels = (
-                test_data[0].to(device),
-                test_data[1].to(device),
-            )
-            pred = model(test_images).argmax(dim=1)
-            for i in range(len(pred)):
-                y_true.append(test_labels[i].item())
-                y_pred.append(pred[i].item())
+        write_convergence_plots(
+            epoch_loss_values=epoch_loss_values,
+            metric_values=metric_values,
+            VAL_INTERVAL=VAL_INTERVAL,
+        )
 
-    print(classification_report(y_true, y_pred, target_names=class_names))
+        from evaluate_trained_model_utils import test_best_checkpoint
+        y_true, y_pred = test_best_checkpoint(
+            eval_model=model,
+            test_loader=test_loader,
+            root_dir=root_dir,
+            device=device,
+            is_main_process=lambda: True,  # Not running distributed, so always main process
+        )
 
+        print(classification_report(y_true, y_pred, target_names=class_names))
 
     if data_dir is None:
         shutil.rmtree(root_dir)

@@ -43,7 +43,7 @@ def show_example_images(
         plt.axis("off")
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("example_from_mednist_dataset.png")
 
 
 from common_imports import os, plt

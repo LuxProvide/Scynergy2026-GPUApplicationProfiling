@@ -147,17 +147,11 @@ def main():
     writer = SummaryWriter() if is_main_process() else None
 
 
-    current_epoch = 0
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
         nvtx.range_push(f"epoch_{epoch + 1}")
-        if is_main_process():
-            current_epoch = current_epoch + 1
-            print("-" * 10)
-            print(f"epoch {epoch + 1}/{MAX_EPOCHS}")
-            if current_epoch == 1:
-                profiler.start()
+
         nvtx.range_push("training")
         model.train()
         nvtx.range_pop()
@@ -183,11 +177,20 @@ def main():
             optimizer.step()
             nvtx.range_pop()
             epoch_loss += loss.item()
-            if is_main_process():
-                print(f"{step}/{len(train_loader)}, " f"train_loss: {loss.item():.4f}")
+            
+            # Compute average loss across all ranks for logging
+            dist_loss = loss.clone().detach()
+            if dist.is_initialized():
+                dist.all_reduce(dist_loss, op=dist.ReduceOp.SUM)
+                dist_loss /= dist.get_world_size()
+
+            rank = dist.get_rank() if dist.is_initialized() else 0
+            print(
+                f"[Rank {rank}] Step {step}/{len(train_loader)} - loss: {loss.item():.4f} (avg: {dist_loss.item():.4f})"
+            )
             epoch_len = len(train_loader)
             if writer is not None:
-                writer.add_scalar("train_loss", loss.item(), epoch_len * epoch + step)
+                writer.add_scalar("train_loss", dist_loss.item(), epoch_len * epoch + step)
             nvtx.range_pop()
         epoch_loss /= step
         epoch_loss_values.append(epoch_loss)
@@ -260,7 +263,7 @@ def main():
                 dist.barrier()
 
         nvtx.range_pop()
-        if is_main_process() and current_epoch == 1:
+        if USE_PROFILER:
             profiler.stop()
 
     if is_main_process():

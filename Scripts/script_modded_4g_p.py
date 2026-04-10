@@ -13,20 +13,14 @@ All rights reserved.
 """
 
 import os
-import shutil
-import tempfile
-import matplotlib.pyplot as plt
-import PIL
 import torch
 import torch.cuda.profiler as profiler
 import torch.cuda.nvtx as nvtx
 import numpy as np
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import classification_report, roc_auc_score
-from monai.apps import download_and_extract
-from monai.config import print_config
-from monai.data import decollate_batch, DataLoader, Dataset, CacheDataset
+from sklearn.metrics import roc_auc_score
+from monai.data import DataLoader, Dataset, CacheDataset
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
     Activations,
@@ -41,8 +35,7 @@ from monai.transforms import (
 from monai.utils import set_determinism
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.distributed import default_pg_timeout
-from dataset_utils import build_mednist_index, MedNISTDataset, split_dataset
+from dataset_utils import build_mednist_index, split_dataset
 from visualization import show_example_images, write_convergence_plots
 from distribute_utils import init_distributed, cleanup, is_main_process
 from data_utils import get_data
@@ -161,8 +154,8 @@ def main():
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), 1e-4)
 
-    MAX_EPOCHS = 4
-    VAL_INTERVAL = 1
+    MAX_EPOCHS = int(os.getenv("MAX_EPOCHS", "1"))
+    VAL_INTERVAL = int(os.getenv("VAL_INTERVAL", "1"))
     best_metric = -1
     best_metric_epoch = -1
     epoch_loss_values = []

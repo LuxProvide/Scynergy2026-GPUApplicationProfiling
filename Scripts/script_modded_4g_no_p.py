@@ -160,8 +160,8 @@ def main():
     loss_function = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), 1e-4)
 
-    MAX_EPOCHS = 4
-    VAL_INTERVAL = 1
+    MAX_EPOCHS = int(os.getenv("MAX_EPOCHS", "1"))
+    VAL_INTERVAL = int(os.getenv("VAL_INTERVAL", "1"))
     best_metric = -1
     best_metric_epoch = -1
     epoch_loss_values = []

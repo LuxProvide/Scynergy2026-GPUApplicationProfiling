@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# set -u
+set -u
+
+echo "----------------------------------"
 
 # ALREADY_IN_VENV=$(python -c "import sys; print('venv' in sys.prefix)")
 # if [ "$ALREADY_IN_VENV" = "venv" ]; then
@@ -62,3 +64,36 @@ else
     export ALREADY_SETUP="true"
 
 fi
+
+
+timestamp=$(date +"%Y_%m_%d_%H_%M_%S")
+if [ "$USE_PROFILER" = "true" ]; then
+    module load Nsight-Systems
+    export PROFDIR=${PWD}/${timestamp}_${case_name}
+    export output_file=$PROFDIR/"profile.%h.%p"
+    mkdir -p "$PROFDIR"
+fi
+
+export PROJECT_DIR=${PWD}
+export OMP_NUM_THREADS=16
+export MONAI_DATA_DIRECTORY=${PWD}/dataset_for_training
+
+if [ "$USE_DISTRIBUTED" = "true" ]; then
+    export RANDOM_PORT=$(shuf -i 20000-65000 -n 1)
+    export head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+    export head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
+    export endpoint="${head_node_ip}:${RANDOM_PORT}"
+else
+    echo "Running in non-distributed mode. No need to set up distributed environment variables."
+fi
+
+export MAX_EPOCHS=1
+export VAL_INTERVAL=1
+echo "the number of epochs is set to ${MAX_EPOCHS} and the validation interval is set to ${VAL_INTERVAL}"
+
+echo "Environment setup complete."
+
+echo "----------------------------------"
+
+
+set +u

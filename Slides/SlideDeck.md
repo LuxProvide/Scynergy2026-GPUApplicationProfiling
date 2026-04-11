@@ -374,6 +374,45 @@ nsys-ui $THE_TRACE
 <!-- _class: lead -->
 ## What can kill the performance that much ? 
 
+<!-- _class: lead -->
+
+# Your turn to try 
+
+---
+
+## Starting point 
+
+```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
+```
+
+---
+## Code to use 
+
+- Python script: `script_modded_4g.py`
+- Launcher: `source launcher_modded_4g_p.sh`
+
+To launch the script **from the OpenOnDemand** terminal:
+
+```bash
+source launcher_modded_4g_p.sh 
+```
+
+---
+## Openning the trace
+
+```bash
+sys-rep
+train completed, best_metric: 0.8383 at epoch: 1
+Generated:
+        .../modded_4g_no_p.mel2129.24037.nsys-rep
+```
+
+Get the path of the ``.nsys-rep`` file and open it with:
+
+```bash
+nsys-ui $THEPATH.nsys-rep
+```
 
 ---
 

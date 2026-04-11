@@ -146,6 +146,7 @@ def main():
     metric_values = []
     writer = SummaryWriter() if is_main_process() else None
 
+    profiler.start()
 
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:

@@ -73,6 +73,7 @@ if [ "$USE_PROFILER" = "true" ]; then
     export PROFDIR=${PWD}/${timestamp}_${case_name}
     export output_file=$PROFDIR/${case_name}".%h.%p"
     mkdir -p "$PROFDIR"
+    export TORCH_NVTX_RANGE=1
 fi
 
 export PROJECT_DIR=${PWD}

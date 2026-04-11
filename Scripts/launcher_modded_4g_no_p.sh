@@ -18,7 +18,7 @@ export USE_PROFILER="false"
 export USE_DISTRIBUTED="true"
 source setup_environment.sh
 
-export BATCH_SIZE=100
+export BATCH_SIZE=512
 export NUM_WORKERS=8
 export PRE_FETCH_FACTOR=2
 

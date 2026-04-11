@@ -370,49 +370,37 @@ nsys-ui $THE_TRACE
 ⚠️ 4x more GPU power but 18% improvement in runtime 
 
 ---
+
+<!-- _class: lead -->
 ## What can kill the performance that much ? 
 
-![width:800px](image-13.png)
 
 ---
 
+## Example of improved script trace 
+
+![width:1200px](image-14.png)
 
 ---
 
-# Workflow on MeluXina (summary)
+## Wrapping things up 
 
-1. Prepare a **representative but smaller** test case  
-2. Request GPU node(s) via Slurm  
-3. Run Nsight Systems for a **global view**  
-4. Identify 1–3 **hot kernels**  
-5. Run Nsight Compute targeted at those kernels  
-6. Implement optimizations → re‑run benchmarks  
-7. Once satisfied, scale back up to full production sizes
+- 1 GPU - base script - 217 seconds
+- 4 GPUs - base script - 189 seconds
+- 4 GPUs - improved script - 9 seconds 
 
 ---
 
-# Practical tips
+# Recap of the workflow when you need to improve your code performance 
 
-- Start with **short profiling runs** to reduce overhead  
-- Use **environment modules** to load correct CUDA/Nsight versions  
-- Keep **profiling configs** (scripts, flags) in version control  
-- Always compare **before vs after** with the same test case  
-- Document:
-  - What you changed
-  - Which metrics improved
-  - Any trade‑offs (e.g. memory vs speed)
+1. Prepare a **representative but smaller** test case if the code is too long to execute  
+2. Run Nsight Systems for a **global view** on the base script
+3. Identify 1–3 **hot kernels**  
+4. Implement optimizations → re‑run profiling 
+5. Carefully review what you have changed. Try not to change only one thing at a time 
+6. Ensure that your modifications did not affect the code functionnality (for example convergence of training)
+7. Once satisfied, scale back up to full production sizes. 
 
----
-
-# Hands‑on exercise (if time permits)
-
-- We’ll take a simple GPU‑accelerated mini‑app  
-- Steps:
-  - Baseline run: measure runtime
-  - Nsight Systems profile: inspect timeline
-  - Nsight Compute: inspect top kernel
-  - Apply 1–2 optimizations (e.g. block size, memory layout)
-  - Re‑profile and discuss results
 
 ---
 
@@ -435,10 +423,12 @@ Questions, specific applications, or issues you’d like to discuss?
 
 # Thank you
 
-- Slides and example scripts:  
-  - (Add link / repository here)
+- Useful resources:
+  - [NSight documentation](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)
+  - [Meluxina Documentation](https://docs.lxp.lu/)
+
 - Contact:  
-  - Your email / group contact
+  - servicedesk [at] lxp.lu
 
 
 ---

@@ -9,6 +9,7 @@ echo "----------------------------------"
 #     echo "Already in a virtual environment. Skipping setup."
 #     exit 0
 # fi
+module load Python
 
 ALREADY_SETUP=${ALREADY_SETUP:-"false"}
 
@@ -35,7 +36,7 @@ else
     pip install --upgrade pip
     check_that_packages_are_installed="true"
     if [ "$check_that_packages_are_installed" = "true" ]; then
-        packages=("monai-weekly[pillow,tqdm]" "matplotlib" "tensorboard" "scikit-learn" "numpy" "requests" "torchvision" "black" "pylint")
+        packages=("monai-weekly[pillow,tqdm]" "matplotlib" "tensorboard" "scikit-learn" "numpy" "requests" "torchvision" "black" "pylint" "autonvtx")
 
         is_installed() {
             python -c "import $1" &> /dev/null
@@ -70,7 +71,7 @@ timestamp=$(date +"%Y_%m_%d_%H_%M_%S")
 if [ "$USE_PROFILER" = "true" ]; then
     module load Nsight-Systems
     export PROFDIR=${PWD}/${timestamp}_${case_name}
-    export output_file=$PROFDIR/"profile.%h.%p"
+    export output_file=$PROFDIR/${case_name}".%h.%p"
     mkdir -p "$PROFDIR"
 fi
 

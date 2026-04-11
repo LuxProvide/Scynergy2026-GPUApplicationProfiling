@@ -219,24 +219,15 @@ def main():
             scaler.step(optimizer)
             nvtx.range_pop()
             scaler.update()
+            
+            if step % 50 == 0 and is_main_process():
+                 print(f"Epoch {epoch + 1} Step {step}/{len(train_loader)} - loss: {loss.item():.4f}")
 
-            # Aggregate loss from all ranks
-            dist_loss = loss.clone().detach()
-            if dist.is_initialized():
-                dist.all_reduce(dist_loss, op=dist.ReduceOp.SUM)
-                dist_loss /= dist.get_world_size()
-
-            rank = dist.get_rank() if dist.is_initialized() else 0
-            print(
-                f"[Rank {rank}] Step {step}/{len(train_loader)} - loss: {loss.item():.4f} (avg: {dist_loss.item():.4f})"
-            )
-
-            epoch_len = len(train_loader)
-            if writer is not None:
-                writer.add_scalar("train_loss", dist_loss.item(), epoch_len * epoch + step)
             nvtx.range_pop()
 
         epoch_loss /= step
+        if dist.is_initialized():
+             dist.all_reduce(torch.tensor(epoch_loss, device=device)) # Aggregate only once per epoch
         epoch_loss_values.append(epoch_loss)
         if is_main_process():
             print(f"epoch {epoch + 1} average loss: {epoch_loss:.4f}")
@@ -248,13 +239,16 @@ def main():
                 nvtx.range_push("validation")
                 eval_model.eval()
                 with torch.no_grad():
-                    y_pred = torch.tensor([], dtype=torch.float32, device=device)
-                    y = torch.tensor([], dtype=torch.long, device=device)
+                    y_pred_list = []
+                    y_list = []
                     for val_data in val_loader:
                         val_images = val_data["img"].to(device, non_blocking=True)
                         val_labels = val_data["label"].to(device, non_blocking=True)
-                        y_pred = torch.cat([y_pred, eval_model(val_images)], dim=0)
-                        y = torch.cat([y, val_labels], dim=0)
+                        y_pred_list.append(eval_model(val_images))
+                        y_list.append(val_labels)
+                    
+                    y_pred = torch.cat(y_pred_list, dim=0)
+                    y = torch.cat(y_list, dim=0)
                     y_prob = torch.softmax(y_pred, dim=1).detach().cpu().numpy()
                     y_true_np = y.detach().cpu().numpy()
 
@@ -293,6 +287,7 @@ def main():
             if dist.is_initialized():
                 dist.barrier()
         nvtx.range_pop()
+        current_epoch += 1
         if is_main_process() and current_epoch == 1:
             profiler.stop()
     if is_main_process():

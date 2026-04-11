@@ -129,17 +129,17 @@ By the end, you should be able to:
 
 
 ```bash
-$ cd /project/home/p201259/workspaces/ 
-$ mkdir -p $USER/ScynergyGPUProfiling2026 
-$ cd $USER/ScynergyGPUProfiling2026
+cd /project/home/p201259/workspaces/ 
+mkdir -p $USER/
+cd $USER/
 ```
 
 ---
 # Cloning the repo
 
 ```bash
-$ git clone https://github.com/LuxProvide/Scynergy2026-GPUApplicationProfiling
-$ cd ScynergyGPUProfiling2026/
+git clone https://github.com/LuxProvide/Scynergy2026-GPUApplicationProfiling
+cd Scynergy2026-GPUApplicationProfiling/
 ```
 
 ---
@@ -207,99 +207,175 @@ We will then be able to:
 
 --- 
 
-# First step: open a trace
+# First step: setting up the environment
+
+Open a terminal in your OOD session and run:
 
 ```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
+cd Scripts
+source setup_environment.sh
+```
+
+--- 
+# Second step: let's open a trace
+
+```bash
+module load Nsight-Systems
+THE_TRACE=/mnt/tier2/project/p201259/materials/15April_GPUApp_Profiling/ProfilingTraces/single_gpu_base.nsys-rep
+nsys-ui $THE_TRACE
+```
+
+--- 
+# Second step: let's open a trace
+
+![width:900px](<Screenshot 2026-04-11 at 13.04.13.png>)
+
+___
+
+# Let's have a closer look
+
+![width:900px](image-5.png)
+
+
+---
+
+# Zoom on a part of the timeline
+
+![width:900px](image-6.png)
+
+---
+# Filter and zoom in
+
+![width:900px](image-7.png)
+
+
+---
+# Filter and zoom in
+
+![width:900px](image-8.png)
+
+---
+# Zooming further
+
+![width:900px](<Screenshot 2026-04-11 at 14.22.38.png>)
+
+
+---
+# Identifying the culprit 
+
+![width:900px](image-10.png)
+
+---
+# Identifying the culprit 
+
+
+![width:600px](image-9.png)
+
+---
+
+# First observations
+
+From the screenshot alone:
+✅ GPU is poorly utilized
+✅ Memory usage is stable but low
+⚠️ Almost everything is on default stream
+⚠️ Limited concurrent execution
+✅ CPU is active, not idle
+⚠️ Long GPU gaps in between the training steps   
+
+___
+# Side note 
+
+The analysis summary allows you to retrieve which command line you used to obtain the trace.
+-> This can be very handy if you have a lot of traces 
+
+![width:600px](image-11.png)
+
+---
+# Let's dig into the command to generate the trace
+
+```bash
+srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
 ```
 
 ---
 
-# Example: Nsight Systems on MeluXina
-
-Basic pattern:
-
-```bash
-nsys profile \
-  -o profile_gpu_app \
-  --stats=true \
-  ./your_gpu_application [args...]
+```
+NSYS_OPTIONS="--cuda-memory-usage=true \
+    --capture-range=cudaProfilerApi \
+    --capture-range-end=stop \
+    --output=${output_file} \
+    -t cuda,nvtx"
 ```
 
-Or inside a Slurm script:
+- **`--cuda-memory-usage`**: Tracks VRAM footprint 
+- **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code 
+- **`--output`**: Defines the path for the `.nsys-rep` file.
+- **`-t cuda`**: Traces GPU kernels, memory copies, and API calls.
+- **`-t nvtx`**: Traces user-defined code annotations (e.g., "Epoch 1", "Optimizer").
+
+
+---
+### We only profile what we need (when possible)
+
+Those 2 flags:
 
 ```bash
-srun nsys profile -o profile_gpu_app ./your_gpu_application
+--capture-range=cudaProfilerApi \
+--capture-range-end=stop \
+```
+in conjunction with these functions:
+```
+import torch.cuda.profiler as profiler
+profiler.start()
+...
+profiler.stop()
 ```
 
-- Generates `profile_gpu_app.nsys-rep`
-- Analyze offline with:
-  - `nsys stats profile_gpu_app.nsys-rep`
-  - Nsight Systems GUI on your workstation
+allow us to profile only what we need ! 
+
+---
+
+
+<!-- _class: lead -->
+
+# Your turn to look at a trace 
 
 
 ---
 
-# Common GPU performance issues
+# Foreword
 
-- Low GPU utilization / long CPU‑only phases
-- Many tiny kernel launches (launch overhead dominated)
-- Poor memory access patterns:
-  - Non‑coalesced global memory
-  - Excessive host↔device copies
-- Low occupancy:
-  - Too many registers per thread
-  - Too small block sizes
-- Imbalance across GPUs in multi‑GPU jobs
+run the following: 
+
+```bash
+module load Nsight-Systems
+THE_TRACE=/mnt/tier2/project/p201259/materials/15April_GPUApp_Profiling/ProfilingTraces/multigpus_base.nsys-rep
+nsys-ui $THE_TRACE
+```
+
+---
+## Observations
+
+![width:800px](image-12.png)
+
+---
+## Observations
+
+- still a lot of gaps in the individual activity of the GPU in the distributed training
+- single GPU: 217 sec for the epoch
+- 4 GPUs: 179 sec
+
+⚠️ 4x more GPU power but 18% improvement in runtime 
+
+---
+## What can kill the performance that much ? 
+
+![width:800px](image-13.png)
 
 ---
 
-# Reading a typical Nsight timeline
-
-Look for:
-
-- **Gaps** on GPU lanes:
-  - Is GPU idle while CPU is busy?
-- **Memcpy spikes**:
-  - Large or frequent data transfers?
-  - Transfers overlapping with compute?
-- **Kernel launch bursts**:
-  - Many short kernels → consider kernel fusion or batching
-- Alignment with:
-  - MPI calls
-  - File I/O
-  - Synchronizations (barriers, `cudaDeviceSynchronize()`)
-
----
-
-# From symptoms to hypotheses
-
-Examples:
-
-- Symptom: GPU idle, long CPU regions
-  - Hypothesis: work not offloaded / blocked by synchronization
-- Symptom: memcpy time dominant
-  - Hypothesis: data layout / transfer strategy suboptimal
-- Symptom: one kernel dominates runtime
-  - Hypothesis: micro‑optimizing that kernel may yield large gains
-- Symptom: low occupancy, many stalls
-  - Hypothesis: tune block size, shared memory usage, loop structure
-
----
-
-# Using Nsight Compute metrics
-
-Key metrics to check (conceptually):
-
-- **Achieved occupancy**  
-- **DRAM throughput** vs peak  
-- **L2 / L1 / shared memory hit rates**  
-- **Warp stall reasons** (e.g. memory dependency, execution dependency, barrier)  
-- **Instruction throughput** (FP32/FP64, tensor core utilization)
-
-These guide whether you should:
-- Focus on memory access patterns
-- Reduce divergence / control flow issues
-- Adjust launch configuration
 
 ---
 

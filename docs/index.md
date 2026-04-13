@@ -19,36 +19,32 @@ By the end of this workshop, you should be able to:
 
 Today's training is composed of:
 
+<<<<<<< HEAD
 - Connection to MeluXina via OpenOnDemand (10 minutes)
 - Introduction to NVIDIA NSight-Systems (~30 minutes)
+    - how to generate a trace with `nsys-profile`
     - Looking at (already collected) traces 
-    - Exploring `nsys-ui` and the `nsys` CLI
+        - how to navigate on the NSight-Systems GUI 
+        - how to use the `nsys` CLI to get some stats 
 - Hands-on: making a PyTorch Training faster (~60 minutes)
-    - Profile and Analysze
+    - Generate your own traces
     - Modify the code to accelerate it
 
 ---
 
-## 💻 Hands-on: Getting Started with MeluXina
+## 💻 Demo/Hands-on Mix:
 
-- [Hands-on Part 1: 🔑 Settings things up](setup.md)
-- [Hands-on Part 2: 😩️ Profile a slow code](nsight_systems.md) 
-- [Hands-on Part 3: 💡 Optimizing your code](optimizing.md)
+- [Hands-on Part: 🔑 Settings things up](setup.md)
+- [Demo and Discussion: 😩️ Getting to know the tool and profiling of a slow code](nsight_systems.md) 
+- [Hands-on Part: 💡 Profile and optimize a distributed GPU-accelearated code](optimizing.md)
 
 
 ## ℹ️ About this training
 
-It has been developed by the **Supercomputing Application Services** group at [**LuxProvide**](https://luxprovide.lu) in the context of the [**EPICURE project**](https://epicure-hpc.eu/).
 
+This training has been developed by the **Supercomputing Application Services** group at [**LuxProvide**](https://luxprovide.lu) in the context of the [**EPICURE project**](https://epicure-hpc.eu/).
 
-<div class="speaker-row">
-  <img src="Marco.png" alt="Marco Magliulo">
-  <img src="Tom.png" alt="Tom Walter">
-</div>
-
-<div class="speaker-caption">
-  Marco Magliulo &nbsp;&nbsp;|&nbsp;&nbsp; Tom Walter
-</div>
+**Authors:** **Marco Magliulo**, **Emmanuel Kieffer**, and **Tom Walter**
 
 
 [![EPICURE](./assets/logo_epicure.png){ width="420" }](https://epicure-hpc.eu/) 

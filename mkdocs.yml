@@ -1,6 +1,6 @@
 site_name: Profiling GPU Apps with NSight-Systems on MeluXina 
-site_description: Webinar/Tutorial on how to Profile GPU Apps with NSight-Systems on MeluXina
-site_url: "https://LuxProvide.github.io/GPU-Profiling-NSight-Systems-MeluXina/"
+site_description: Webinar/Tutorial on how to Profile GPU Apps with NSight-Systems on Meluxina
+site_url: "https://luxprovide.github.io/Scynergy2026-GPUApplicationProfiling/"
 
 site_author: Marco Magliulo, Emmanuel Kieffer, Xavier Besseron
 site_dir: public

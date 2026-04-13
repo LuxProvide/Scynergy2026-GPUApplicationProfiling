@@ -1,0 +1,13 @@
+mkdocs
+mkdocs-exclude
+mkdocs-get-deps
+mkdocs-git-revision-date-localized-plugin
+mkdocs-include-markdown-plugin
+mkdocs-jupyter
+mkdocs-linkcheck
+mkdocs-macros-plugin
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-plugin-progress
+mkdocs-plugin-progress
+markdown-include

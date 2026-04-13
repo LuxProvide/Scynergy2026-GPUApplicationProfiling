@@ -186,15 +186,23 @@ def main():
         if is_main_process():
             print("-" * 10)
             print(f"epoch {epoch + 1}/{MAX_EPOCHS}")
-        nvtx.range_push("training")
+
         model.train()
-        nvtx.range_pop()
         epoch_loss = 0
         step = 0
         scaler = torch.amp.GradScaler(enabled=(device.type == "cuda"))
-        for batch_data in train_loader:
-            nvtx.range_push("training_step")
-            step += 1
+        data_iter = iter(train_loader)
+        while True:
+            nvtx.range_push(f"training_step_{step}")
+
+            try:
+                nvtx.range_push("data_loading")
+                batch_data = next(data_iter)
+                nvtx.range_pop()
+            except StopIteration:
+                break
+
+
             nvtx.range_push("wait_for_batch")
             inputs = batch_data["img"].to(device, non_blocking=True)
             labels = batch_data["label"].to(device, non_blocking=True)
@@ -212,6 +220,19 @@ def main():
                 loss = loss_function(outputs, labels)
                 nvtx.range_pop()
             epoch_loss += loss.item()
+
+            # Compute average loss across all ranks for logging
+            dist_loss = loss.clone().detach()
+            if dist.is_initialized():
+                dist.all_reduce(dist_loss, op=dist.ReduceOp.SUM)
+                dist_loss /= dist.get_world_size()
+
+            rank = dist.get_rank() if dist.is_initialized() else 0
+            print(
+                f"[Rank {rank}] Step {step}/{len(train_loader)} - loss: {loss.item():.4f} (avg: {dist_loss.item():.4f})"
+            )
+
+
             nvtx.range_push("ddp_backward_sync")
             scaler.scale(loss).backward()
             nvtx.range_pop()
@@ -224,6 +245,8 @@ def main():
                  print(f"Epoch {epoch + 1} Step {step}/{len(train_loader)} - loss: {loss.item():.4f}")
 
             nvtx.range_pop()
+
+            step += 1
 
         epoch_loss /= step
         if dist.is_initialized():

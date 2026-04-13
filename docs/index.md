@@ -10,7 +10,7 @@ This training is given in the context of the [Scynergy 2026 event](https://www.s
 
 By the end of this workshop, you should be able to:
 
-- Profile your GPU jobs on Meluxina
+- Profile your GPU jobs on MeluXina
 - Interpret key NSight-Systems trace metrics and timelines  
 - Identify common GPU bottlenecks (IO, compute, memory, synchronization, communication)  
 - Apply simple optimizations and validate improvements  
@@ -19,7 +19,7 @@ By the end of this workshop, you should be able to:
 
 Today's training is composed of:
 
-- Connection to Meluxina via OpenOnDemand (10 minutes)
+- Connection to MeluXina via OpenOnDemand (10 minutes)
 - Introduction to NVIDIA NSight-Systems (~30 minutes)
     - Looking at (already collected) traces 
     - Exploring `nsys-ui` and the `nsys` CLI

@@ -1,12 +1,12 @@
-# Connecting to Meluxina via OpenOnDemand
+# Connecting to MeluXina via OpenOnDemand
 
-This short guide explains how to connect to **Meluxina** using **OpenOnDemand**, start a remote desktop session, open a terminal, and retrieve the tutorial code for the profiling exercises.
+This short guide explains how to connect to **MeluXina** using **OpenOnDemand**, start a remote desktop session, open a terminal, and retrieve the tutorial code for the profiling exercises.
 
 ---
 
 # Open the OpenOnDemand portal
 
-Go to the Meluxina OpenOnDemand portal in your browser:
+Go to the MeluXina OpenOnDemand portal in your browser:
 
 **https://portal.lxp.lu/**
 
@@ -25,7 +25,7 @@ From the OpenOnDemand landing page, open the **Interactive Apps** menu and selec
 <img src="images/image-1.png" width="700">
 
 
-This application allows you to start a graphical remote session on Meluxina, which is useful for running tools that require a desktop environment.
+This application allows you to start a graphical remote session on MeluXina, which is useful for running tools that require a desktop environment.
 
 ---
 
@@ -54,7 +54,7 @@ After the job starts, click **Launch Desktop** (or the corresponding button show
 
 <img src="images/image-3.png" width="700">
 
-This will open a browser-based desktop connected to the allocated Meluxina resources.
+This will open a browser-based desktop connected to the allocated MeluXina resources.
 
 ---
 

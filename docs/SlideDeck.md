@@ -44,7 +44,7 @@ style: |
 # Understanding why your GPU-accelerated is slow using NVIDIA Nsight Systems
 Apr 15, 2026 | 1:20 PM - 3:00 PM
 
-![alt text](Scynergy.png)
+![alt text](/docs/assets/scynergy2026.png)
 
 ___
 # Presenters 

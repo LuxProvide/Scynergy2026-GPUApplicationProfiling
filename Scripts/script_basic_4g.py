@@ -153,14 +153,20 @@ def main():
             train_sampler.set_epoch(epoch)
         nvtx.range_push(f"epoch_{epoch + 1}")
 
-        nvtx.range_push("training")
         model.train()
-        nvtx.range_pop()
         epoch_loss = 0
         step = 0
-        for batch_data in train_loader:
-            nvtx.range_push("training_step")
-            step += 1
+
+        data_iter = iter(train_loader)
+        while True:
+            nvtx.range_push(f"training_step_{step}")
+            try:
+                nvtx.range_push("data_loading")
+                batch_data = next(data_iter)
+                nvtx.range_pop()
+            except StopIteration:
+                break
+
             inputs, labels = batch_data[0].to(device), batch_data[1].to(device)
             nvtx.range_push("forward_backward")
             optimizer.zero_grad()
@@ -193,6 +199,9 @@ def main():
             if writer is not None:
                 writer.add_scalar("train_loss", dist_loss.item(), epoch_len * epoch + step)
             nvtx.range_pop()
+
+            step += 1
+
         epoch_loss /= step
         epoch_loss_values.append(epoch_loss)
         if is_main_process():

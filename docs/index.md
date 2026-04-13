@@ -38,17 +38,10 @@ Today's training is composed of:
 
 ## ℹ️ About this training
 
-It has been developed by the **Supercomputing Application Services** group at [**LuxProvide**](https://luxprovide.lu) in the context of the [**EPICURE project**](https://epicure-hpc.eu/).
 
+This training has been developed by the **Supercomputing Application Services** group at [**LuxProvide**](https://luxprovide.lu) in the context of the [**EPICURE project**](https://epicure-hpc.eu/).
 
-<div class="speaker-row">
-  <img src="Marco.png" alt="Marco Magliulo">
-  <img src="Tom.png" alt="Tom Walter">
-</div>
-
-<div class="speaker-caption">
-  Marco Magliulo &nbsp;&nbsp;|&nbsp;&nbsp; Tom Walter
-</div>
+**Authors:** **Marco Magliulo**, **Emmanuel Kieffer**, and **Tom Walter**
 
 
 [![EPICURE](./assets/logo_epicure.png){ width="420" }](https://epicure-hpc.eu/) 

@@ -121,15 +121,15 @@ nsys-ui $THEPATH.nsys-rep
 
 - Apply Nsight to your **own applications** on MeluXina to produce traces  
 
-```bash
-nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
-```
+    ```bash
+    nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
+    ```
 
-or if `srun` is available: 
+    or if `srun` is available: 
 
-```bash
-srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
-```
+    ```bash
+    srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
+    ```
 
 - Performance optimization guided by profiling results 
 
@@ -150,13 +150,7 @@ Questions, specific applications, or issues you’d like to discuss?
 - Contact:  
   - servicedesk [at] lxp.lu
 
-
----
-
-<!-- _class: lead -->
-
-# Back-up slides  
-
+<!-- 
 ---
 
 # Meluxina GPU node Hardware 
@@ -181,4 +175,4 @@ Questions, specific applications, or issues you’d like to discuss?
 
 # Zoom on a dataloading part of the training 
 
-![width:1000px](/docs/images/image-15.png)
+![width:1000px](/docs/images/image-15.png) -->

@@ -17,6 +17,11 @@ if [ "$ALREADY_SETUP" = "true" ]; then
     echo "Environment already set up. Skipping setup."
 else
 
+    COLLECTED_TRACES_DIR=/mnt/tier2/project/p201259/materials/15April_GPUApp_Profiling/ProfilingTraces
+    export TRACE_1GPU_BASE=${COLLECTED_TRACES_DIR}/single_gpu_base.nsys-rep
+    export TRACE_4GPU_BASE=${COLLECTED_TRACES_DIR}/multi_gpu_base.nsys-rep
+    export TRACE_GPU_OPTIM=${COLLECTED_TRACES_DIR}/multi_gpu_optim.nsys-rep
+
     VENV_DIR=$(realpath ..)
 
     VENV_NAME=Scynergy_venv

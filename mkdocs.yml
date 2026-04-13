@@ -1,91 +1,90 @@
 site_name: Profiling GPU Apps with NSight-Systems on Meluxina 
-nav:
-  - Tutorial description: 'index.md'
-  - Profiling: SlideDeck.md
-
 site_description: Webinar/Tutorial on how to Profile GPU Apps with NSight-Systems on Meluxina
-site_author: Marco Magliulo, Emmanuel Kieffer
-site_dir: public
 site_url: "https://LuxProvide.github.io/GPU-Profiling-NSight-Systems-Meluxina/"
 
-# Repository
-repo_name: LuxProvide/Scynergy2026-GPUApplicationProfiling
-repo_url: https://github.com/LuxProvide/Scynergy2026-GPUApplicationProfiling
+site_author: Marco Magliulo, Emmanuel Kieffer, Xavier Besseron
+site_dir: public
 
-# Copyright
-copyright: Copyright &copy; 2026 LuxProvide
+nav:
+    - 🏠 Overview: index.md
+    - 1️⃣ Settings things up: setup.md
+    - 2️⃣ Getting Started With NSight Systems: nsight_systems.md
+    - 3️⃣ Optimize a slow PyTorch distributed training: optimizing.md
 
+exclude_docs: |
+    *.backup
 
-# Configuration
 # strict: true
+validation:
+    omitted_files: warn
+    absolute_links: warn
+    unrecognized_links: warn
 
 theme:
-  name: material
-  logo: assets/LuxProvide_logo_white.svg
-  favicon: assets/favicon.png
-  custom_dir: overrides
-  language: en
-  features:
-    - navigation.expand
-    - navigation.footer
-    - toc.integrate
-    - content.code.copy
-    - content.code.select
+    #include_homepage_in_sidebar: False
+    #navigation_depth: 4
+    #collapse_navigation: True
+    #titles_only: False
+    #sticky_navigation: True
+    name: material
+    logo: assets/LuxProvide_logo_white.svg
+    favicon: assets/favicon.png
+    language: en
+    features:
+        - navigation.expand
+        - navigation.footer
+        - navigation.sections
+        - navigation.path
+        - toc.integrate
+        - content.code.copy
+        - content.code.select
+        - content.code.annotate
+        #- navigation.tabs
 
 plugins:
-  - search # necessary for search to work
-  - progress
-  - include-markdown
+    - search
+    - progress
+    - include-markdown
+    - open-in-new-tab
 
-# Extra stylesheets (incl. Twitter Bootstrap)
 extra_css:
-  - stylesheets/extra.css
-  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
+    - stylesheets/extra.css
 
-
-# Extensions
 markdown_extensions:
-  - attr_list
-  - md_in_html
-  # notes, warnings, hints, ...
-  - admonition
-  - codehilite:
-      guess_lang: true
-  - footnotes
-  - markdown_include.include:
-      base_path: docs
-  - markdown.extensions.admonition
-  - meta
-  - pymdownx.arithmatex:
-      generic: true
-  - pymdownx.details
-  # Icons from Emoji extensions, giving access to following icon sets:
-  # - Material Design: https://materialdesignicons.com/
-  # - FontAwesome:     https://fontawesome.com/icons?d=gallery&m=free
-  # – Octicons:        https://octicons.github.com/
-  # - pymdownx.emoji:
-  #     emoji_index: !!python/name:materialx.emoji.twemoji
-  #     emoji_generator: !!python/name:materialx.emoji.to_svg
-  # auto-link HTML, FTP, and email links
-  - pymdownx.magiclink:
-      repo_url_shorthand: true
-      social_url_shorthand: true
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.tabbed
-  - pymdownx.smartsymbols
-  # code blocks with syntax highlighting, graphs
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - toc:
-      permalink: true
+    - attr_list
+    - md_in_html
+    - tables
+    - admonition
+    - toc:
+          permalink: true
+    - codehilite:
+          guess_lang: true
+    - footnotes
+    - markdown_include.include:
+          base_path: docs
+    - markdown.extensions.admonition
+    - meta
+    - pymdownx.arithmatex:
+          generic: true
+    - pymdownx.details
+    - pymdownx.magiclink:
+          repo_url_shorthand: true
+          social_url_shorthand: true
+    - pymdownx.highlight:
+          anchor_linenums: true
+          line_spans: __span
+          pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.tabbed
+    - pymdownx.smartsymbols
+    - pymdownx.tabbed:
+          alternate_style: true
+    - pymdownx.superfences
+    - pymdownx.details
+    - pymdownx.keys
+    - pymdownx.critic
+    - pymdownx.caret
+    - pymdownx.keys
+    - pymdownx.mark
+    - pymdownx.tilde

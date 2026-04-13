@@ -32,53 +32,11 @@ style: |
   .small {
     font-size: 0.8em;
   }
----
-
-# Speakers
-
-
-<!-- _footer: ![EPICURE logo](Epicure.png) -->
-
-<!-- _class: lead -->
-
-# Understanding why your GPU-accelerated is slow using NVIDIA Nsight Systems
-Apr 15, 2026 | 1:20 PM - 3:00 PM
-
-![alt text](Scynergy.png)
-
-___
-# Presenters 
-
-<!-- _class: lead -->
-
-<div class="speaker-row">
-  <img src="Marco.png" alt="Marco Magliulo">
-  <img src="Tom.png" alt="Tom Walter">
-</div>
-
-<div class="speaker-caption">
-  Marco Magliulo &nbsp;&nbsp;|&nbsp;&nbsp; Tom Walter
-</div>
-
-
----
-
-# Goal of this workshop
-
-By the end, you should be able to:
-
-- Profile your GPU jobs on Meluxina
-- Interpret key NSight-Systems trace metrics and timelines  
-- Identify common GPU bottlenecks (IO, compute, memory, synchronization, communication)  
-- Apply simple optimizations and validate improvements  
 
 ---
 
 ## Agenda 
 
-- Connection to Meluxina via OpenOnDemand
-- Introduction to NVIDIA NSight-Systems
-- Hands-on: making a PyTorch Training faster
 
 ---
 
@@ -90,27 +48,27 @@ By the end, you should be able to:
 ---
 # https://portal.lxp.lu/
 
-![width:700px](image.png)
+![width:700px](/docs/images/image.png)
 
 ---
 # Openning the Desktop app 
 
-![width:700px](image-1.png)
+![width:700px](/docs/images/image-1.png)
 
 ---
 # Choosing the appropriate job options 
 
-![width:700px](image-2.png)
+![width:700px](/docs/images/image-2.png)
 
 ---
 # Accessing the session
 
-![width:700px](image-3.png)
+![width:700px](/docs/images/image-3.png)
 
 ---
 # Openning the terminal app
 
-![width:900px](image-4.png)
+![width:900px](/docs/images/image-4.png)
 
 
 
@@ -177,7 +135,7 @@ cd Scynergy2026-GPUApplicationProfiling/
   - Kernel‑level analysis and metrics
   - Good for: *“Why is this kernel so slow?”*
 
-Today focus on **Nsight Systems** 
+Today's focus is on **Nsight Systems** 
 
 ---
 
@@ -187,7 +145,7 @@ Today focus on **Nsight Systems**
 2. Run **Nsight Systems** on this smaller test case
 3. Identify **top time consumers** in the timeline
 4. Formulate hypotheses → apply changes → re‑profile
-5. Repeat until performance is satisfactory 
+5. Repeat until the performance is satisfactory 
 
 
 ---
@@ -202,7 +160,7 @@ Two main steps:
 
 # What we will be using  
 
-For the ease of use, we are going to use OpenOnDemand.
+For ease of use, we are going to use OpenOnDemand.
 We will then be able to:
 - Open `Nsight-Systems` GUI to analyze traces already prepared for you,
 - We will also use the `nsys` command line tools
@@ -240,13 +198,13 @@ nsys-ui $THE_TRACE
 --- 
 # Second step: let's open a trace
 
-![width:900px](<Screenshot 2026-04-11 at 13.04.13.png>)
+![width:900px](</docs/images/Screenshot 2026-04-11 at 13.04.13.png>)
 
 ___
 
 # Let's have a closer look
 
-![width:800px](image-5.png)
+![width:800px](/docs/images/image-5.png)
 
 
 ---
@@ -256,36 +214,36 @@ ___
 Hover your mouse over a refion of interest by keeping the left button of your mouse pressed.
 
 
-![width:900px](image-6.png)
+![width:900px](/docs/images/image-6.png)
 
 ---
 # Filter and zoom in
 
-![width:900px](image-7.png)
+![width:900px](/docs/images/image-7.png)
 
 
 ---
 # Filter and zoom in
 
-![width:900px](image-8.png)
+![width:900px](/docs/images/image-8.png)
 
 
 ---
 # Zooming further
 
-![width:900px](<Screenshot 2026-04-11 at 14.22.38.png>)
+![width:900px](</docs/images/Screenshot 2026-04-11 at 14.22.38.png>)
 
 
 ---
 # Identifying the culprit 
 
-![width:900px](image-10.png)
+![width:900px](/docs/images/image-10.png)
 
 ---
 # Identifying the culprit 
 
 
-![width:500px](image-9.png)
+![width:500px](/docs/images/image-9.png)
 
 ---
 
@@ -305,7 +263,7 @@ ___
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
 -> This can be very handy if you have a lot of traces 
 
-![width:600px](image-11.png)
+![width:600px](/docs/images/image-11.png)
 
 ---
 # Let's dig into the command to generate the trace
@@ -368,18 +326,164 @@ For collection, you can also reduce trace size and overhead with `--delay` and/o
 
 # Nsight Systems CLI
 
-- Start with `nsys stats` for quick summaries in the terminal. 
-- Use `nsys analyze` for an expert-systems style report.
-- Use `nsys export` to create export files from an existing `.nsys-rep`. This allows to post-process traces programatically (with SQL for instance)
-- Use `nsys recipe` for statistical analysis and plots across one or more reports. 
+- `nsys stats` → generate statistical summaries 
+- `nsys analyze` → generate an expert-systems report 
+- `nsys export` → generate an export file from an existing `.nsys-rep`. 
+- `nsys recipe` → post-process **multiple existing results** to generate statistics and various plots. 
 
 ---
 
-# Fastest entry point: `nsys stats`
+# Fastest starting point: `nsys stats`
 
 ```bash
-nsys stats myrun.nsys-rep
+nsys stats report.nsys-rep
 ```
+
+*   `nsys stats` is the quickest way to get useful text summaries from a saved report. 
+*   It accepts either `.nsys-rep` or SQLite input.
+
+---
+
+# Ask targeted questions with report scripts
+
+```bash
+nsys stats --report cuda_api_sum report.nsys-rep
+nsys stats --report cuda_gpu_kern_sum report.nsys-rep
+nsys stats --report cuda_gpu_trace report.nsys-rep
+```
+
+---
+
+*   Standard report scripts shipped with Nsight Systems. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   `cuda_api_sum` summarizes CUDA API calls and their execution times. 
+*   `cuda_gpu_kern_sum` summarizes CUDA kernels and their execution times. 
+*   `cuda_gpu_trace` prints a trace of CUDA kernels and memory operations sorted by start time. 
+
+***
+
+# Useful report variants
+
+```bash
+nsys stats --report cuda_gpu_kern_sum:nvtx-name report.nsys-rep
+nsys stats --report cuda_gpu_kern_gb_sum:base report.nsys-rep
+nsys stats --report cuda_api_gpu_sum:mangled report.nsys-rep
+```
+
+*   Several standard reports support optional modifiers such as `:nvtx-name`, `:base`, and `:mangled`. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   `:nvtx-name` prefixes a kernel with the name of the innermost enclosing NVTX range. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   `:base` aggregates by base kernel name rather than the fully templated name, while `:mangled` uses the raw mangled name when available. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# Multiple reports and machine-readable output
+
+```bash
+nsys stats \
+  --report cuda_gpu_trace \
+  --report cuda_gpu_kern_sum \
+  --report cuda_api_sum \
+  --format csv,column \
+  --output .,- \
+  report.nsys-rep
+```
+
+*   `nsys stats` can generate multiple reports in one invocation. [\[docs.nvidia.com\]](https://docs.nvidia.com/drive/drive-os-5.2.3.0L/nsight-systems/pdf/UserGuide.pdf), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)
+*   It can also emit different output formats, which is useful for terminal inspection and scripting. [\[docs.nvidia.com\]](https://docs.nvidia.com/drive/drive-os-5.2.3.0L/nsight-systems/pdf/UserGuide.pdf), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)
+*   A practical pattern is to keep one human-readable view and one CSV export for automation. [\[docs.nvidia.com\]](https://docs.nvidia.com/drive/drive-os-5.2.3.0L/nsight-systems/pdf/UserGuide.pdf), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# `nsys analyze` and `nsys export`
+
+```bash
+nsys analyze report.nsys-rep
+nsys export report.nsys-rep
+```
+
+*   `nsys analyze` is the expert-systems layer: it post-processes an existing result and generates an expert report. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/2024.3/UserGuide/index.html)
+*   `nsys export` is the conversion layer: it generates export files from an existing `.nsys-rep`. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/2024.3/UserGuide/index.html)
+*   A simple mental model is: `stats` for summaries, `analyze` for guidance, and `export` for downstream tooling. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# What `nsys recipe` is for
+
+*   `nsys recipe` is intended for **post-processing multiple existing results** rather than just one report. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/2024.3/UserGuide/index.html)
+*   Its output is higher-level statistical information and various plots. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   The Analysis Guide explicitly notes that recipes can use `--timeunit` to change output time units from the default nanoseconds. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# `nsys recipe` — minimal template
+
+```bash
+nsys recipe <recipe-name> <recipe-options> --timeunit ms
+```
+
+*   The key idea is that a recipe runs a named post-processing workflow on existing profiling results. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   Recipes are meant for multi-report analysis and plot generation, so they are a good fit for benchmark campaigns and regression studies. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   `--timeunit` is explicitly documented as a recipe option for changing time units. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# `nsys recipe` — community example
+
+```bash
+nsys recipe nccl_gpu_overlap_trace \
+  --input ./profile/ \
+  --output ./output/nccl_gpu_overlap_trace
+```
+
+*   A community-maintained `nsys_recipes` repository shows a concrete `nsys recipe` invocation pattern using a recipe name plus `--input` and `--output`. [\[github.com\]](https://github.com/hyxcl/nsys_recipes/blob/main/README.md), [\[github.com\]](https://github.com/hyxcl/nsys_recipes)
+*   That repository describes its recipes as a supplement to Nsight Systems’ built-in multi-report recipe support. [\[github.com\]](https://github.com/hyxcl/nsys_recipes/blob/main/README.md), [\[github.com\]](https://github.com/hyxcl/nsys_recipes)
+*   One documented example is `nccl_gpu_overlap_trace`, which focuses on communication/compute overlap analysis. [\[github.com\]](https://github.com/hyxcl/nsys_recipes/blob/main/README.md), [\[github.com\]](https://github.com/hyxcl/nsys_recipes)
+
+***
+
+# Why recipes matter
+
+*   `stats` is excellent for **single-report summaries**. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   `recipe` becomes more interesting when you have **many reports** and want **comparative statistics or plots**. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+*   This makes `recipe` a natural fit for parameter sweeps, nightly performance baselines, and multi-run studies. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# Practical workflow
+
+1.  Start with `nsys stats report.nsys-rep` for quick triage. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+2.  Use targeted reports such as `cuda_api_sum`, `cuda_gpu_kern_sum`, or `cuda_kern_exec_sum` to answer specific questions. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+3.  Move to `nsys analyze` if you want expert-style guidance. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/2024.3/UserGuide/index.html)
+4.  Use `nsys export` or `nsys recipe` when you need downstream tooling, comparative analysis, or plots across multiple reports. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+***
+
+# Minimal cheat sheet
+
+```bash
+# quick summary
+nsys stats report.nsys-rep
+
+# focused summaries
+nsys stats --report cuda_api_sum report.nsys-rep
+nsys stats --report cuda_gpu_kern_sum report.nsys-rep
+nsys stats --report cuda_kern_exec_sum report.nsys-rep
+
+# expert report
+nsys analyze report.nsys-rep
+
+# exports
+nsys export report.nsys-rep
+
+# multi-report analysis
+nsys recipe <recipe-name> <recipe-options> --timeunit ms
+```
+
+*   The takeaway is simple: **profile once, post-process many times**. [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/UserGuide/index.html), [\[docs.nvidia.com\]](https://docs.nvidia.com/nsight-systems/AnalysisGuide/index.html)
+
+```
+
+
+
 
 ---
 
@@ -409,7 +513,7 @@ nsys-ui $THE_TRACE
 ---
 ## Observations
 
-![width:800px](image-12.png)
+![width:800px](/docs/images/image-12.png)
 
 ---
 ## Observations
@@ -471,7 +575,7 @@ nsys-ui $THEPATH.nsys-rep
 
 ## Example of improved script trace 
 
-![width:1200px](image-14.png)
+![width:1200px](/docs/images/image-14.png)
 
 ---
 
@@ -554,4 +658,4 @@ Questions, specific applications, or issues you’d like to discuss?
 
 # Zoom on a dataloading part of the training 
 
-![alt text](image-15.png)
+![width:1000px](/docs/images/image-15.png)

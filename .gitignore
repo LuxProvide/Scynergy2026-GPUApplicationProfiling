@@ -7,7 +7,6 @@
 *.sqlite
 *.Scynergy_venv
 *.jpeg
-*.png
 Scripts/dataset_for_training/*
 __pycache__/
 events.*

@@ -1,10 +1,7 @@
 site_name: Profiling GPU Apps with NSight-Systems on Meluxina 
 nav:
   - Tutorial description: 'index.md'
-  - Rust on MeluXina: 
-      - Accelerators and setup: 'rust.md'
-      - Rust with CUDA: 'rust_cuda.md'
-      - Rust with OpenCL: 'rust_opencl.md'
+  - Profiling: SlideDeck.md
 
 site_description: Webinar/Tutorial on how to Profile GPU Apps with NSight-Systems on Meluxina
 site_author: Marco Magliulo, Emmanuel Kieffer

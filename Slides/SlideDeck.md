@@ -68,7 +68,7 @@ ___
 By the end, you should be able to:
 
 - Profile your GPU jobs on Meluxina
-- Interpret key trace metrics and timelines  
+- Interpret key NSight-Systems trace metrics and timelines  
 - Identify common GPU bottlenecks (IO, compute, memory, synchronization, communication)  
 - Apply simple optimizations and validate improvements  
 
@@ -79,9 +79,6 @@ By the end, you should be able to:
 - Connection to Meluxina via OpenOnDemand
 - Introduction to NVIDIA NSight-Systems
 - Hands-on: making a PyTorch Training faster
-  - distributing it 
-  - making it faster
-
 
 ---
 
@@ -143,15 +140,10 @@ cd Scynergy2026-GPUApplicationProfiling/
 ```
 
 ---
-##  Key Questions Answered via Profiling
 
-- **CPU/IO Bottlenecks:** Is the GPU idle during data loading?
-- **Data Movement:** Do H2D transfers dominate compute time?
-- **Compute vs. Memory:** bandwidth-bound or compute-bound?
-- **Multi-GPU Scaling:** Is there load imbalance across ranks?
-- **Sync Stalls:** Are MPI/NCCL/Barriers causing idleness?
-- **Launch Overhead:** Are kernels too small or frequent?
-- **Occupancy:** Is register/SRAM usage limiting parallelism?
+<!-- _class: lead -->
+
+# Why profiling? 
 
 ---
 
@@ -162,6 +154,17 @@ cd Scynergy2026-GPUApplicationProfiling/
   - Host ↔ device transfers
   - Kernel launches and occupancy
   - Memory hierarchy (global / shared / L2 / registers)
+
+
+---
+##  Typical Key Questions Answered via Profiling
+
+- **CPU/IO Bottlenecks:** Is the GPU idle during data loading?
+- **Compute vs. Memory:** bandwidth-bound or compute-bound?
+- **Multi-GPU Scaling:** Is there load imbalance across ranks?
+- **Sync Stalls:** Are MPI/NCCL/Barriers causing idleness?
+- **Launch Overhead:** Are kernels too small or frequent?
+- **Occupancy:** Is register/SRAM usage limiting parallelism?
 
 ---
 
@@ -197,13 +200,18 @@ Two main steps:
 
 ---
 
-# Our workflow for today 
+# What we will be using  
 
 For the ease of use, we are going to use OpenOnDemand.
 We will then be able to:
 - Open `Nsight-Systems` GUI to analyze traces already prepared for you,
-- We will also use the rich `nsys` command line tools
-- Modify the code, profile, adjust, start again
+- We will also use the `nsys` command line tools
+
+---
+
+<!-- _class: lead -->
+
+# Let's start  
 
 --- 
 
@@ -226,6 +234,9 @@ THE_TRACE=/mnt/tier2/project/p201259/materials/15April_GPUApp_Profiling/Profilin
 nsys-ui $THE_TRACE
 ```
 
+- Here we look at the trace corresponding to the code `Scripts/script_basic_1g.py`
+- This is what you would get from a "naive" training code
+
 --- 
 # Second step: let's open a trace
 
@@ -235,12 +246,15 @@ ___
 
 # Let's have a closer look
 
-![width:900px](image-5.png)
+![width:800px](image-5.png)
 
 
 ---
 
 # Zoom on a part of the timeline
+
+Hover your mouse over a refion of interest by keeping the left button of your mouse pressed.
+
 
 ![width:900px](image-6.png)
 
@@ -254,6 +268,7 @@ ___
 # Filter and zoom in
 
 ![width:900px](image-8.png)
+
 
 ---
 # Zooming further
@@ -270,7 +285,7 @@ ___
 # Identifying the culprit 
 
 
-![width:600px](image-9.png)
+![width:500px](image-9.png)
 
 ---
 
@@ -287,7 +302,7 @@ From the screenshot alone:
 ___
 # Side note 
 
-The analysis summary allows you to retrieve which command line you used to obtain the trace.
+In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
 -> This can be very handy if you have a lot of traces 
 
 ![width:600px](image-11.png)

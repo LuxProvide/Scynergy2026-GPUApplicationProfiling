@@ -147,7 +147,23 @@ def main():
         nvtx.range_pop()
         epoch_loss = 0
         step = 0
-        for batch_data in train_loader:
+
+
+        from torch.profiler import record_function
+
+        data_iter = iter(train_loader)
+
+        while True:
+            try:
+                if USE_PROFILER:
+                    with record_function("dataloader"):
+                        batch_data = next(data_iter)
+                else:
+                    batch_data = next(data_iter)
+            except StopIteration:
+                break
+
+        # for batch_data in train_loader:
             nvtx.range_push("training_step")
             step += 1
             inputs, labels = batch_data[0].to(device), batch_data[1].to(device)

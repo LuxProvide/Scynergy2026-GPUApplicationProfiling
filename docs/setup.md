@@ -1,4 +1,4 @@
-# Connecting to Meluxina via OpenOnDemand
+# Setting things up
 
 This short guide explains how to connect to **Meluxina** using **OpenOnDemand**, start a remote desktop session, open a terminal, and retrieve the tutorial code for the profiling exercises.
 

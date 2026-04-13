@@ -19,21 +19,21 @@ By the end of this workshop, you should be able to:
 
 Today's training is composed of:
 
-- Connection to Meluxina via OpenOnDemand (10 minutes)
-- Introduction to NVIDIA NSight-Systems (~30 minutes)
-    - Looking at (already collected) traces 
-    - Exploring `nsys-ui` and the `nsys` CLI
-- Hands-on: making a PyTorch Training faster (~60 minutes)
-    - Profile and Analysze
-    - Modify the code to accelerate it
+- A demo part where we will show you how to:
+    - generate a trace with `nsys-profile`
+    - navigate on the NSight-Systems GUI 
+    - how to use the `nsys` CLI to get some stats 
+- A hands-on part where **you** will:
+    - generate your own traces
+    - try to improve the performance of the code being profiled 
 
 ---
 
-## 💻 Hands-on: Getting Started with MeluXina
+## 💻 Demo/Hands-on Mix:
 
-- [Hands-on Part 1: 🔑 Settings things up](setup.md)
-- [Hands-on Part 2: 😩️ Profile a slow code](nsight_systems.md) 
-- [Hands-on Part 3: 💡 Optimizing your code](optimizing.md)
+- [Hands-on Part: 🔑 Settings things up](setup.md)
+- [Demo and Discussion: 😩️ Getting to know the tool and profiling of a slow code](nsight_systems.md) 
+- [Hands-on Part: 💡 Profile and optimize a distributed GPU-accelearated code](optimizing.md)
 
 
 ## ℹ️ About this training

@@ -357,6 +357,11 @@ allow us to profile only what we need !
 
 # Your turn to look at a trace 
 
+---
+
+<!-- _class: lead -->
+
+What if we try something brute force and just increase the number of GPUs used i? 
 
 ---
 
@@ -378,6 +383,8 @@ nsys-ui $THE_TRACE
 ---
 ## Observations
 
+- We knew that the problem was not coming from the GPU usage when using 1 GPU 
+- Still, we wanted to see if using 4 GPUs would reduce the training time 
 - still a lot of gaps in the individual activity of the GPU in the distributed training
 - single GPU: 217 sec for the epoch
 - 4 GPUs: 179 sec
@@ -391,7 +398,7 @@ nsys-ui $THE_TRACE
 
 <!-- _class: lead -->
 
-# Your turn to try 
+# Your turn to investigate 
 
 ---
 
@@ -449,7 +456,7 @@ nsys-ui $THEPATH.nsys-rep
 
 1. Prepare a **representative but smaller** test case if the code is too long to execute  
 2. Run Nsight Systems for a **global view** on the base script
-3. Identify 1–3 **hot kernels**  
+3. Identify the 2–3 main bottlenecks from the trace
 4. Implement optimizations → re‑run profiling 
 5. Carefully review what you have changed. Try not to change only one thing at a time 
 6. Ensure that your modifications did not affect the code functionnality (for example convergence of training)
@@ -460,12 +467,13 @@ nsys-ui $THEPATH.nsys-rep
 
 # What you can do after this workshop
 
-- Apply Nsight to your **own applications** on MeluXina  
-- Build a small **profiling checklist** for new codes  
-- Share **profiling results** with colleagues to guide optimization  
-- Reach out to support / performance teams with:
-  - Profiles
-  - Clear descriptions of bottlenecks
+- Apply Nsight to your **own applications** on MeluXina to produce traces  
+
+```bash
+srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
+```
+
+- Performance optimization guided by profiling results 
 
 ---
 

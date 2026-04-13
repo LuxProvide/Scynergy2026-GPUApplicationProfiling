@@ -31,7 +31,7 @@ Today's training is composed of:
 
 ## 💻 Hands-on: Getting Started with MeluXina
 
-- [Hands-on Part 1: 🔑 Settings things up](connections_meluxina.md)
+- [Hands-on Part 1: 🔑 Settings things up](setup.md)
 - [Hands-on Part 2: 😩️ Profile a slow code](nsight_systems.md) 
 - [Hands-on Part 3: 💡 Optimizing your code](optimizing.md)
 

@@ -50,27 +50,27 @@ style: |
 ---
 # https://portal.lxp.lu/
 
-![width:700px](image.png)
+![width:700px](/docs/images/image.png)
 
 ---
 # Openning the Desktop app 
 
-![width:700px](image-1.png)
+![width:700px](/docs/images/image-1.png)
 
 ---
 # Choosing the appropriate job options 
 
-![width:700px](image-2.png)
+![width:700px](/docs/images/image-2.png)
 
 ---
 # Accessing the session
 
-![width:700px](image-3.png)
+![width:700px](/docs/images/image-3.png)
 
 ---
 # Openning the terminal app
 
-![width:900px](image-4.png)
+![width:900px](/docs/images/image-4.png)
 
 
 
@@ -137,7 +137,7 @@ cd Scynergy2026-GPUApplicationProfiling/
   - Kernel‑level analysis and metrics
   - Good for: *“Why is this kernel so slow?”*
 
-Today focus on **Nsight Systems** 
+Today's focus is on **Nsight Systems** 
 
 ---
 
@@ -147,7 +147,7 @@ Today focus on **Nsight Systems**
 2. Run **Nsight Systems** on this smaller test case
 3. Identify **top time consumers** in the timeline
 4. Formulate hypotheses → apply changes → re‑profile
-5. Repeat until performance is satisfactory 
+5. Repeat until the performance is satisfactory 
 
 
 ---
@@ -162,7 +162,7 @@ Two main steps:
 
 # What we will be using  
 
-For the ease of use, we are going to use OpenOnDemand.
+For ease of use, we are going to use OpenOnDemand.
 We will then be able to:
 - Open `Nsight-Systems` GUI to analyze traces already prepared for you,
 - We will also use the `nsys` command line tools
@@ -200,13 +200,13 @@ nsys-ui $THE_TRACE
 --- 
 # Second step: let's open a trace
 
-![width:900px](<Screenshot 2026-04-11 at 13.04.13.png>)
+![width:900px](</docs/images/Screenshot 2026-04-11 at 13.04.13.png>)
 
 ___
 
 # Let's have a closer look
 
-![width:800px](image-5.png)
+![width:800px](/docs/images/image-5.png)
 
 
 ---
@@ -216,36 +216,36 @@ ___
 Hover your mouse over a refion of interest by keeping the left button of your mouse pressed.
 
 
-![width:900px](image-6.png)
+![width:900px](/docs/images/image-6.png)
 
 ---
 # Filter and zoom in
 
-![width:900px](image-7.png)
+![width:900px](/docs/images/image-7.png)
 
 
 ---
 # Filter and zoom in
 
-![width:900px](image-8.png)
+![width:900px](/docs/images/image-8.png)
 
 
 ---
 # Zooming further
 
-![width:900px](<Screenshot 2026-04-11 at 14.22.38.png>)
+![width:900px](</docs/images/Screenshot 2026-04-11 at 14.22.38.png>)
 
 
 ---
 # Identifying the culprit 
 
-![width:900px](image-10.png)
+![width:900px](/docs/images/image-10.png)
 
 ---
 # Identifying the culprit 
 
 
-![width:500px](image-9.png)
+![width:500px](/docs/images/image-9.png)
 
 ---
 
@@ -265,7 +265,7 @@ ___
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
 -> This can be very handy if you have a lot of traces 
 
-![width:600px](image-11.png)
+![width:600px](/docs/images/image-11.png)
 
 ---
 # Let's dig into the command to generate the trace
@@ -515,7 +515,7 @@ nsys-ui $THE_TRACE
 ---
 ## Observations
 
-![width:800px](image-12.png)
+![width:800px](/docs/images/image-12.png)
 
 ---
 ## Observations
@@ -577,7 +577,7 @@ nsys-ui $THEPATH.nsys-rep
 
 ## Example of improved script trace 
 
-![width:1200px](image-14.png)
+![width:1200px](/docs/images/image-14.png)
 
 ---
 
@@ -660,4 +660,4 @@ Questions, specific applications, or issues you’d like to discuss?
 
 # Zoom on a dataloading part of the training 
 
-![width:1000px](image-15.png)
+![width:1000px](/docs/images/image-15.png)

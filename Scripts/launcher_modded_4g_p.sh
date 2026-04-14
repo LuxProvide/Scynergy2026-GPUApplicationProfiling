@@ -50,3 +50,19 @@ srun \
   --mem-bind=local bash -c "nsys profile \
         ${NSYS_OPTIONS} \
         ${TORCHRUN_COMMAND}"
+
+if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+    srun \
+    --ntasks-per-node=1 \
+    --gpus-per-task=4 \
+    --cpus-per-task=8 \
+    --hint=nomultithread \
+    --gpu-bind=map_gpu:0,1,2,3 \
+    --cpu-bind=cores \
+    --mem-bind=local bash -c "nsys profile \
+            ${NSYS_OPTIONS} \
+            ${TORCHRUN_COMMAND}"
+           
+else
+    nsys profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
+fi

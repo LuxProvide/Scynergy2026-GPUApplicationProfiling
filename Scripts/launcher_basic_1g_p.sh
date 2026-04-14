@@ -32,8 +32,11 @@ NSYS_OPTIONS="--cuda-memory-usage=true \
     --output=${output_file} \
     -t cuda,nvtx"
 
-srun --cpu-bind=cores -N1 --gpus=1 \
-        --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
-        nsys profile \
-        ${NSYS_OPTIONS} \
-        ${TORCHRUN_COMMAND}"
+if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+    srun --cpu-bind=cores -N1 --gpus=4 \
+            --ntasks-per-node=1 --kill-on-bad-exit=1 \
+            bash -c "nsys profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}" 
+           
+else
+    nsys profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
+fi

@@ -22,5 +22,12 @@ TORCHRUN_COMMAND="torchrun \
     --log_dir ${PROJECT_DIR}/log_torch \
     ${PROJECT_DIR}/script_basic_1g.py"
 
-srun --cpu-bind=cores -N1 --gpus=1 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
-    ${TORCHRUN_COMMAND}"
+
+if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+    srun --cpu-bind=cores -N1 --gpus=1 \
+            --ntasks-per-node=1 --kill-on-bad-exit=1 \
+            bash -c "nsys profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}" 
+           
+else
+    exec ${TORCHRUN_COMMAND}
+fi

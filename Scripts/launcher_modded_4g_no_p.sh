@@ -31,15 +31,19 @@ TORCHRUN_COMMAND="torchrun \
     --log_dir ${PROJECT_DIR}/log_torch \
     ${PROJECT_DIR}/script_modded_4g.py"
 
-srun --cpu-bind=cores -N1 --gpus=4 --ntasks-per-node=1 --kill-on-bad-exit=1 bash -c "
-    ${TORCHRUN_COMMAND}"
 
-srun \
-  --ntasks-per-node=1 \
-  --gpus-per-task=4 \
-  --cpus-per-task=8 \
-  --hint=nomultithread \
-  --gpu-bind=map_gpu:0,1,2,3 \
-  --cpu-bind=cores \
-  --mem-bind=local bash -c "${TORCHRUN_COMMAND}"
+if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+    srun \
+    --ntasks-per-node=1 \
+    --gpus-per-task=4 \
+    --cpus-per-task=8 \
+    --hint=nomultithread \
+    --gpu-bind=map_gpu:0,1,2,3 \
+    --cpu-bind=cores \
+    --mem-bind=local bash -c "${TORCHRUN_COMMAND}"
+
+           
+else
+    exec ${TORCHRUN_COMMAND}
+fi
    

@@ -53,6 +53,9 @@ At this point we can state that:
 
 ### Starting point
 
+
+
+
 ```bash
 cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
 ```
@@ -73,6 +76,13 @@ To launch the script **from the OpenOnDemand** terminal:
 ```bash
 bash launcher_modded_4g_p.sh 
 ```
+
+<div style="background-color:#ffeeba; padding:10px; border-left:5px solid #f0ad4e;">
+<strong>⚠️ Warning</strong><br>
+The performance in OpenOnDemand are lower than the one you would get from a standard `salloc` interactive session or via `sbatch`
+
+If possible, try to run the script **outside** of OpenOnDemand.
+</div>
 
 ---
 

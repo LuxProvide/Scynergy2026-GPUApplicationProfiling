@@ -21,10 +21,10 @@ Today's training is composed of:
 
 - Connection to MeluXina via OpenOnDemand (~10 minutes)
 - Introduction to NVIDIA NSight-Systems (~30 minutes)
-  - how to generate a trace with `nsys-profile`
+  - How to generate a trace with `nsys-profile`
   - Looking at (already collected) traces of a [MonAI](https://project-monai.github.io/) training on Meluxina  
-    - how to navigate on the NSight-Systems GUI
-    - how to use the `nsys` CLI to get some stats
+    - How to navigate on the NSight-Systems GUI
+    - How to use the `nsys` CLI to get some stats
 - Hands-on: making a PyTorch Training faster (~60 minutes)
   - Generate your own traces
   - Modify the code to accelerate it

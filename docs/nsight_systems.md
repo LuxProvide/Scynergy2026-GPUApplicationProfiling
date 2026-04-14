@@ -106,15 +106,14 @@ nsys-ui $TRACE_1GPU_BASE
 - This is what you would get from a "naive" training code running on one GPU only 
 
 
-![](.images/Screenshot 2026-04-11 at 13.04.13.png)
-
+![alt text](<images/Screenshot 2026-04-11 at 13.04.13.png>)
 
 ### Let's have a closer look
 
-![](.images/image-5.png)
+![alt text](images/image-5.png)
 
 
-### Zoom on a part of the timeline
+#### Zoom on a part of the timeline
 
 Hover your mouse over a region of interest by keeping the left button of your mouse pressed.
 
@@ -130,13 +129,13 @@ Look at the timeline!
 
 ![alt text](<Screenshot 2026-04-13 at 14.32.57.png>)
 
-### Zooming further
+#### Zooming further
 
 Only select one repetition of the pattern we see all along the epoch and let's have a look
 
-![](images/Screenshot 2026-04-11 at 14.22.38.png)x
+![alt text](<images/Screenshot 2026-04-11 at 14.22.38.png>)
 
-### Identifying the culprit 
+#### Identifying the culprit 
 
 ![alt text](images/image-2b.png)
 
@@ -321,6 +320,8 @@ Here I selected another chunk where the GPU is being used and the GPU gap is det
 ![alt text](images/image-6b.png)
 
 However, if I generate a report from the command line, this can be really misleading as we totally miss that the GPU is idle
+
+**Example**
 
 ```bash
 $ nsys analyze --filter-nvtx=training_step_67 --rule gpu_gaps basic_1g_p.mel2151.25580.nsys-rep 

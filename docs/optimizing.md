@@ -1,15 +1,14 @@
-# Your turn to look at a trace 
+# Your turn to look at a trace
 
 This time, you are in command.
 You will do two things:
 
 - open a trace of the same training but distributed on 4 GPUs and analyze it
-- profile a better performing code, open the trace, experiment what happens when the parameters are being changed 
+- profile a better performing code, open the trace, experiment what happens when the parameters are being changed
 
+## What if we try something brute force and just increase the number of GPUs used i?
 
-## What if we try something brute force and just increase the number of GPUs used i? 
-
-Still from your OpenOnDemand terminal run the following: 
+Still from your OpenOnDemand terminal run the following:
 
 ```bash
 nsys-ui $TRACE_4GPU_BASE
@@ -23,17 +22,15 @@ Your Nsight-systems UI should look like this:
 
 ## Observations
 
-- We knew that the problem was not coming from the GPU usage when using 1 GPU 
-- Still, we wanted to see if using 4 GPUs would reduce the training time 
+- We knew that the problem was not coming from the GPU usage when using 1 GPU
+- Still, we wanted to see if using 4 GPUs would reduce the training time
 - Obviously, still a lot of gaps in the individual activity of the GPU in the distributed training
 - We just duplicated the problem
 
-
 | Configuration | Time per Epoch | Speedup vs. 1 GPU | Scaling Efficiency |
-|---|---:|---:|---:|
+| --- | ---: | ---: | ---: |
 | 1 GPU | 217 s | 1.00× | 100.0% |
 | 4 GPUs | 179 s | 1.21× | 30.3% |
-
 
 ⚠️ 4x more GPU power but 21% speedup only  
 
@@ -45,25 +42,25 @@ Your Nsight-systems UI should look like this:
 
 ## What to change to improve performances
 
-
-### Your turn to investigate 
+### Your turn to investigate
 
 - This time you are totally in command. You will
-    * collect a trace 
-    * analyze it
-    * find what is/are the bottleneck(s)
-    * modify the code accordingly
+  - collect a trace
+  - analyze it
+  - find what is/are the bottleneck(s)
+  - modify the code accordingly
 
 ---
 
-### Starting point 
+### Starting point
 
 ```bash
 cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
 ```
 
 ---
-### Code to use 
+
+### Code to use
 
 - Python script: `script_modded_4g.py`
 - Launcher: `source launcher_modded_4g_p.sh`
@@ -74,8 +71,8 @@ To launch the script **from the OpenOnDemand** terminal:
 bash launcher_modded_4g_p.sh 
 ```
 
-
 ---
+
 ### Openning the trace
 
 ```bash
@@ -93,36 +90,25 @@ nsys-ui $THEPATH.nsys-rep
 
 ---
 
-## Conclusion
-
-### Example of trace: improved execution
+## Example of trace with improved execution time
 
 ![alt text](images/image-14.png)
 
----
+## Conclusion
 
-### Wrapping things up 
-
-- 1 GPU - base script - 217 seconds
-- 4 GPUs - base script - 189 seconds
-- 4 GPUs - improved script - 9 seconds 
-
----
-
-### Recap of the workflow when you need to improve your code performance 
+### Recap of the workflow when you need to improve your code performance
 
 1. Prepare a **representative but smaller** test case if the code is too long to execute  
 2. Run Nsight Systems for a **global view** on the base script
 3. Identify the 2–3 main bottlenecks from the trace
-4. Implement optimizations → re‑run profiling 
-5. Carefully review what you have changed. Try not to change only one thing at a time 
+4. Implement optimizations → re‑run profiling
+5. Carefully review what you have changed. Try not to change only one thing at a time
 6. Ensure that your modifications did not affect the code functionnality (for example convergence of training)
-7. Once satisfied, scale back up to full production sizes. 
-
+7. Once satisfied, scale back up to full production sizes.
 
 ---
 
-# What you can do after this workshop
+## What you can do after this workshop
 
 - Apply Nsight to your **own applications** on MeluXina to produce traces  
 
@@ -130,23 +116,23 @@ nsys-ui $THEPATH.nsys-rep
     nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
     ```
 
-    or if `srun` is available (outside of OpenOnDemand): 
+    or if `srun` is available (outside of OpenOnDemand):
 
     ```bash
     srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
     ```
 
-- Performance optimization guided by profiling results 
+- Performance optimization guided by profiling results
 
 ---
 
-# Q & A
+## Q & A
 
 Questions, specific applications, or issues you’d like to discuss?
 
 ---
 
-# Thank you
+## Thank you
 
 - Useful resources:
   - [NSight documentation](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)

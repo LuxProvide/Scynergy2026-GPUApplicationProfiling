@@ -6,8 +6,9 @@ The goal of this setup is to provide you with an interactive **GPU-enabled** env
 
 
 ---
+## OpenOnDemand
 
-# Open the OpenOnDemand portal
+### Open the OpenOnDemand portal
 
 Open your web browser and navigate to the MeluXina OpenOnDemand portal:
 
@@ -24,7 +25,7 @@ After successful authentication, you will be redirected to the OpenOnDemand home
 
 ---
 
-# Opening the Desktop app
+### Opening the Desktop app
 
 From the OpenOnDemand landing page, open the **Interactive Apps** menu and select the **Desktop** application.
 
@@ -35,7 +36,7 @@ This application allows you to start a graphical remote session on MeluXina, whi
 
 ---
 
-# Choosing the appropriate job options
+### Choosing the appropriate job options
 
 Configure the desktop job with the appropriate parameters for the tutorial.
 
@@ -55,17 +56,19 @@ Once the job is submitted, OpenOnDemand will queue it and prepare your interacti
 
 ---
 
-# Accessing the session
+### Accessing the session
 
-After the job starts, click **Launch Desktop** (or the corresponding button shown in the interface) to open your remote session in the **My Interactive Session** tab.
+After the job starts, OpenOnDemand will show it under My Interactive Sessions.
+Click **Launch Desktop** to connect to your session.
 
 <img src="images/image-3.png" width="700">
 
 This will open a browser-based desktop connected to the allocated MeluXina resources.
+No other software is required on your local machine ! 
 
 ---
 
-# Opening the terminal app
+### Opening the terminal app
 
 Inside the remote desktop session, open a terminal window.
 
@@ -75,7 +78,9 @@ The terminal will be used for all command-line operations in this tutorial, incl
 
 ---
 
-# Going to the project folder and Getting the code
+## Cloning the repo
+
+### Going to the project folder
 
 In the next steps, we will prepare a workspace and download the tutorial material from LuxProvide GitHub.
 
@@ -87,9 +92,9 @@ mkdir -p $USER/
 cd $USER/
 ```
 
-# Cloning the repository
+### Cloning 
 
-Clone the training repository and move into the project folder:
+Next, clone the training repository containing the code:
 
 ```bash
 git clone https://github.com/LuxProvide/Scynergy2026-GPUApplicationProfiling
@@ -99,3 +104,11 @@ cd Scynergy2026-GPUApplicationProfiling/
 After this step, you should have access to all files needed for the tutorial, including source code, examples, and profiling material.
 
 You are now ready to continue with the hands-on exercises.
+
+
+## Next steps
+You are now fully set up with:
+
+An interactive GPU-enabled desktop session
+Access to the tutorial source code
+A working terminal environment

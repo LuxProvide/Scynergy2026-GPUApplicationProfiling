@@ -57,12 +57,16 @@ At this point we can state that:
 cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
 ```
 
----
+- Python script to modify: `script_modded_4g.py`
+- Launcher to modify: `source launcher_modded_4g_p.sh`
 
-### Code to use
+In particular, play with the following variables
 
-- Python script: `script_modded_4g.py`
-- Launcher: `source launcher_modded_4g_p.sh`
+```bash
+export BATCH_SIZE=...
+export NUM_WORKERS=...
+export PRE_FETCH_FACTOR=...
+```
 
 To launch the script **from the OpenOnDemand** terminal:
 

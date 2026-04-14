@@ -19,8 +19,7 @@ export USE_DISTRIBUTED="true"
 source setup_environment.sh
 export PYTHONUNBUFFERED=1
 
-export OMP_NUM_THREADS=1
-export BATCH_SIZE=1024
+export BATCH_SIZE=2048
 export NUM_WORKERS=8
 export PRE_FETCH_FACTOR=2
 

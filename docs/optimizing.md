@@ -20,8 +20,7 @@ nsys-ui $TRACE_4GPU_BASE
 
 Let's take 10 minutes for you to play around with this trace and then we will debrief  
 
-
-![width:800px](/docs/images/image-12.png)
+![alt text](images/image-12.png)
 
 ---
 ## Observations
@@ -92,7 +91,7 @@ nsys-ui $THEPATH.nsys-rep
 
 ### Example of trace: improved execution
 
-![width:1200px](/docs/images/image-14.png)
+![alt text](images/image-14.png)
 
 ---
 
@@ -125,7 +124,7 @@ nsys-ui $THEPATH.nsys-rep
     nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
     ```
 
-    or if `srun` is available: 
+    or if `srun` is available (outside of OpenOnDemand): 
 
     ```bash
     srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}

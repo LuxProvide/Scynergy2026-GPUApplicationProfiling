@@ -11,3 +11,4 @@ Scripts/dataset_for_training/*
 __pycache__/
 events.*
 *.csv
+Scripts/training_plot_*.png

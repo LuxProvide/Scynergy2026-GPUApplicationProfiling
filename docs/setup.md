@@ -2,11 +2,15 @@
 
 This short guide explains how to connect to **MeluXina** using **OpenOnDemand**, start a remote desktop session, open a terminal, and retrieve the tutorial code for the profiling exercises.
 
+The goal of this setup is to provide you with an interactive **GPU-enabled** environment where you can run and profile applications with graphical and command-line tools.
+
+
 ---
 
 # Open the OpenOnDemand portal
 
-Go to the MeluXina OpenOnDemand portal in your browser:
+Open your web browser and navigate to the MeluXina OpenOnDemand portal:
+
 
 **https://portal.lxp.lu/**
 
@@ -14,7 +18,9 @@ Go to the MeluXina OpenOnDemand portal in your browser:
 
 
 Log in with your credentials.  
-Once authenticated, you will reach the OpenOnDemand home page, where you can launch interactive applications such as a remote desktop session which is the app we will be using.
+
+After successful authentication, you will be redirected to the OpenOnDemand home page. From here, you can launch interactive applications such as terminals, notebooks, and full remote desktop sessions. For this tutorial, we will use the Desktop application, which provides a complete Linux desktop environment.
+
 
 ---
 
@@ -33,7 +39,8 @@ This application allows you to start a graphical remote session on MeluXina, whi
 
 Configure the desktop job with the appropriate parameters for the tutorial.
 
-<img src="image.png" width="700">
+<img src="image-7.png" width="700">
+
 
 Recommended settings:
 - 1 node

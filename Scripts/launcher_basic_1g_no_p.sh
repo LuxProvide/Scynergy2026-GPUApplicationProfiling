@@ -26,7 +26,7 @@ TORCHRUN_COMMAND="torchrun \
 if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
     srun --cpu-bind=cores -N1 --gpus=1 \
             --ntasks-per-node=1 --kill-on-bad-exit=1 \
-            bash -c "nsys profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}" 
+            bash -c "${TORCHRUN_COMMAND}" 
            
 else
     exec ${TORCHRUN_COMMAND}

@@ -33,9 +33,9 @@ Today's training is composed of:
 
 ## 💻 Demo/Hands-on Mix:
 
-- [Hands-on Part: 🔑 Settings things up](setup.md)
-- [Demo and Discussion: 😩️ Getting to know the tool and profiling of a slow [MonAI](https://project-monai.github.io/) training code](nsight_systems.md) 
-- [Hands-on Part: 💡 Profile and optimize a distributed GPU-accelearated code](optimizing.md)
+- [Hands-on Part: Settings things up](setup.md)
+- [Demo and Discussion: ️Getting to know the tool and profiling of a slow [MonAI](https://project-monai.github.io/) training code](nsight_systems.md) 
+- [Hands-on Part: Profile and optimize a distributed GPU-accelerated code](optimizing.md)
 
 
 ## ℹ️ About this training

@@ -41,8 +41,6 @@ if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
     --gpu-bind=map_gpu:0,1,2,3 \
     --cpu-bind=cores \
     --mem-bind=local bash -c "${TORCHRUN_COMMAND}"
-
-           
 else
     exec ${TORCHRUN_COMMAND}
 fi

@@ -14,13 +14,36 @@
 
 ###  Typical Key Questions Answered via Profiling
 
-- **CPU/IO Bottlenecks:** Is the GPU idle during data loading?
-- **Compute vs. Memory:** bandwidth-bound or compute-bound?
-- **Multi-GPU Scaling (if applicable):** Is there load imbalance across ranks?
-- **Sync Stalls:** Are MPI/NCCL/Barriers causing idleness?
-- **Launch Overhead:** Are kernels too small or frequent?
-- **Occupancy:** Is register/SRAM usage limiting parallelism?
 
+Profiling helps identify where time and resources are actually spent during execution. Common questions it can answer include:
+
+
+- CPU - I/O Bottlenecks
+Is the GPU frequently idle while waiting for data loading, preprocessing, or host-side work?
+
+- Compute vs. Memory Behavior
+Is application performance limited by computational throughput, or by memory bandwidth and data movement?
+
+- Multi‑GPU Scaling (when applicable)
+Are all GPUs and ranks doing comparable amounts of work, or is load imbalance reducing scalability?
+
+- Synchronization Overhead
+Are MPI, NCCL operations, or synchronization barriers causing GPUs to stall or wait unnecessarily?
+
+- Kernel Launch Overhead
+Is performance affected by launching many small or short-lived kernels?
+
+- GPU Utilization and Occupancy
+Are register pressure, shared memory usage, or low occupancy limiting available parallelism?
+
+### Usual workflow
+
+0. **You have a possible performance issue** with time-consuming app/workflow
+1. **Reproduce the problem** with a shorter test case
+2. Run iyour Profiler on this smaller test case
+3. Identify **top time consumers** in the timeline
+4. Formulate hypotheses → apply changes → re‑profile
+5. Repeat until performance is satisfactory 
 
 ### NVIDIA Nsight tool family
 
@@ -33,18 +56,6 @@
 
 Today focus on **Nsight Systems** 
 
-
-### Usual workflow
-
-0. **You have a possible performance issue** with time-consuming app/workflow
-1. **Reproduce the problem** with a shorter test case
-2. Run **Nsight Systems** on this smaller test case
-3. Identify **top time consumers** in the timeline
-4. Formulate hypotheses → apply changes → re‑profile
-5. Repeat until performance is satisfactory 
-
-
-
 ### High-level workflow when using Nsight
 
 Two main steps:
@@ -54,7 +65,17 @@ Two main steps:
 
 ## Openning your first trace
 
-## First step: setting up the environment
+
+### A short word on what we will look at 
+
+Today's workshop is about [MonAI](https://project-monai.github.io/) training
+
+More specifically, we will work on the training of a classification model aimed at classifying medical images:
+
+![](images/example_from_mednist_dataset.png)
+
+
+### First step: setting up the environment
 
 Open a terminal in your OOD session and run:
 
@@ -64,7 +85,7 @@ cd Scripts
 source setup_environment.sh
 ```
 
-## Second step: openning a trace  
+### Second step: openning a trace  
 
 ```bash
 module load Nsight-Systems
@@ -74,15 +95,16 @@ nsys-ui $TRACE_1GPU_BASE
 - Here we look at the trace corresponding to the code `Scripts/script_basic_1g.py`
 - This is what you would get from a "naive" training code running on one GPU only 
 
-<img src="images/Screenshot 2026-04-11 at 13.04.13.png" width="700">
+
+![](.images/Screenshot 2026-04-11 at 13.04.13.png)
 
 
-## Let's have a closer look
+### Let's have a closer look
 
-<img src="images/image-5.png" width="700">
+![](.images/image-5.png)
 
 
-## Zoom on a part of the timeline
+### Zoom on a part of the timeline
 
 Hover your mouse over a region of interest by keeping the left button of your mouse pressed.
 
@@ -98,23 +120,23 @@ Look at the timeline!
 
 ![alt text](<Screenshot 2026-04-13 at 14.32.57.png>)
 
-## Zooming further
+### Zooming further
 
 Only select one repetition of the pattern we see all along the epoch and let's have a look
 
-<img src="images/Screenshot 2026-04-11 at 14.22.38.png" width="700">
+![](images/Screenshot 2026-04-11 at 14.22.38.png)x
 
-## Identifying the culprit 
+### Identifying the culprit 
 
-![alt text](image-2.png)
+![alt text](images/image-2b.png)
 
 
-![alt text](image-3.png)
+![alt text](images/image-3b.png)
 
 
 ---
 
-## First observations
+### First observations
 
 From the screenshot alone:
 ✅ GPU is poorly utilized
@@ -126,15 +148,17 @@ From the screenshot alone:
 ⚠️ It is clear that the dataloader is the culprit 
 
 ___
-## Side note 
+### Side note 
 
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
 -> This can be very handy if you have a lot of traces 
 
-<img src="images/image-11.png" width="700">
+
+![alt text](images/image-11.png)
+
 
 ---
-## Let's dig into the command to generate the trace
+### Let's dig into the command to generate the trace
 
 ```bash
 nsys-profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
@@ -156,7 +180,7 @@ NSYS_OPTIONS="--cuda-memory-usage=true \
 - **`-t nvtx`**: Traces user-defined code annotations (e.g., "Epoch 1", "Optimizer").
 
 
-## Only profile what is needed (when possible)
+### Only profile what is needed (when possible)
 
 Those 2 flags:
 
@@ -203,7 +227,7 @@ nsys stats report.nsys-rep
 *   `nsys stats` is the quickest way to get useful text summaries from a saved report. 
 *   It accepts either `.nsys-rep` or SQLite input.
 
-### Example
+##### Example
 
 We can filter by `nvtx` range which is very handy to only focus on a `nvtx` range 
 
@@ -260,7 +284,7 @@ w.writerows(rows[:10])
 ' > top10_cuda_gpu_trace.csv
 ```
 
-### Multiple reports and machine-readable output
+#### Multiple reports and machine-readable output
 
 You can generate multiple reports at once:
 
@@ -274,17 +298,17 @@ nsys stats \
   report.nsys-rep
 ```
 
-### GOTCHAS
+#### GOTCHAS
 
 Missed GPU gaps
 
-![alt text](image-5.png)
+![alt text](images/image-5b.png)
 
 Strangely enough, a GPU gap is detected only if the selected range is between two GPU utilization chunks
 
 Here I selected another chunk where the GPU is being used and the GPU gap is detected...
 
-![alt text](image-6.png)
+![alt text](images/image-6b.png)
 
 However, if I generate a report from the command line, this can be really misleading as we totally miss that the GPU is idle
 

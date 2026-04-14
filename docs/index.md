@@ -1,4 +1,4 @@
-![SCynergy 2026](./assets/scynergy2026.png){ width="640" }
+![SCynergy 2026](./assets/scynergy2026.png)
 
 # Understanding why your GPU-accelerated is slow using NVIDIA Nsight Systems
 
@@ -19,11 +19,10 @@ By the end of this workshop, you should be able to:
 
 Today's training is composed of:
 
-<<<<<<< HEAD
 - Connection to MeluXina via OpenOnDemand (10 minutes)
 - Introduction to NVIDIA NSight-Systems (~30 minutes)
     - how to generate a trace with `nsys-profile`
-    - Looking at (already collected) traces 
+    - Looking at (already collected) traces of a [MonAI](https://project-monai.github.io/) training on Meluxina  
         - how to navigate on the NSight-Systems GUI 
         - how to use the `nsys` CLI to get some stats 
 - Hands-on: making a PyTorch Training faster (~60 minutes)
@@ -35,7 +34,7 @@ Today's training is composed of:
 ## 💻 Demo/Hands-on Mix:
 
 - [Hands-on Part: 🔑 Settings things up](setup.md)
-- [Demo and Discussion: 😩️ Getting to know the tool and profiling of a slow code](nsight_systems.md) 
+- [Demo and Discussion: 😩️ Getting to know the tool and profiling of a slow [MonAI](https://project-monai.github.io/) training code](nsight_systems.md) 
 - [Hands-on Part: 💡 Profile and optimize a distributed GPU-accelearated code](optimizing.md)
 
 

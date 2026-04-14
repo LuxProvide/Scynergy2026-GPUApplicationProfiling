@@ -87,8 +87,12 @@ export MONAI_DATA_DIRECTORY=${PWD}/dataset_for_training
 
 if [ "$USE_DISTRIBUTED" = "true" ]; then
     export RANDOM_PORT=$(shuf -i 20000-65000 -n 1)
-    export head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
-    export head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
+    if command -v srun /dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+        export head_node=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+        export head_node_ip=$(srun --nodes=1 --ntasks=1 -w "$head_node" hostname --ip-address)
+    else   
+        export head_node_ip=$(hostname --ip-address)
+    fi
     export endpoint="${head_node_ip}:${RANDOM_PORT}"
 else
     echo "Running in non-distributed mode. No need to set up distributed environment variables."

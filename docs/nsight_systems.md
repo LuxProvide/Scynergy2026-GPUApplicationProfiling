@@ -34,7 +34,15 @@ Are MPI, NCCL operations, or synchronization barriers causing GPUs to stall or w
 Is performance affected by launching many small or short-lived kernels?
 
 - GPU Utilization and Occupancy
-Are register pressure, shared memory usage, or low occupancy limiting available parallelism?
+Are register pressure, shared memory usage, or low occupancy limiting available parallelism? --> This requires another tool than the one that we will see today 
+
+<!-- explanation that can be given to the audience ofr the last point:
+A GPU runs many threads at the same time.
+But each Streaming Multiprocessor (SM) has limited resources, such as
+Registers, shared memory, Maximum threads / warps / blocks per Streaming Multiprocessor
+If one kernel uses too much of any of these resources per thread or per block, then fewer blocks/warps can fit on an SM at once.
+That reduces occupancy, which may reduce the GPU’s ability to hide latency and keep execution units busy. -->
+
 
 ### Usual workflow
 
@@ -69,6 +77,8 @@ Two main steps:
 ### A short word on what we will look at 
 
 Today's workshop is about [MonAI](https://project-monai.github.io/) training
+
+![alt text](images/MonAILogo.png)
 
 More specifically, we will work on the training of a classification model aimed at classifying medical images:
 

@@ -32,11 +32,10 @@ Your Nsight-systems UI should look like this:
 | 1 GPU | 217 s | 1.00× | 100.0% |
 | 4 GPUs | 179 s | 1.21× | 30.3% |
 
-⚠️ 4x more GPU power but 21% speedup only  
+At this point we can state that:
 
----
-
-⚠️ My ennemy is still the same: the dataloader  
+- ⚠️ 4x more GPU power but 21% speedup only  
+- ⚠️ My ennemy is still the same: the dataloader  
 
 ---
 
@@ -95,6 +94,109 @@ nsys-ui $THEPATH.nsys-rep
 ![alt text](images/image-14.png)
 
 ## Conclusion
+
+### What we changed in the code to make it more efficient
+
+#### Diagnostic
+
+- We analyzed the trace, identified the main bottleneck, and then applied changes, if possible **one by one** ! If you don't do this you might miss what is truly changing your performance  
+- In the case we presented, the problem was obvious because:
+  - with `nvtx` ranges we identified what specific part of the training loop was the issue
+  - we had large GPU gaps at every step
+- During the dataloading, we hypothetized that either the CPU was doing something to the data before the GPU could work on it, or it was due to slow I/O.
+
+#### Changes  
+
+With the previous diagnostic in mind we made the following changes:
+
+- Use the **`CacheDataset`** of MonAI.
+- Tweak the dataloader: we increased the number of workers that PyTorch uses.
+- Included Test **pinning / non-blocking copies**,
+
+##### Explanation of the changes (the most interesting bit)
+
+**`CacheDataset`**
+By using this, and if you have enough RAM to do so, your transformed Dataset goes onto the RAM.
+    - launching your training is longer but afterwards your perf. gains are substantial
+    - your dataset is fetched from the RAM and not from the filesystem!
+
+![alt text](images/cachedDataset.png)
+
+Caching the Dataset consume some memory on the host RAM but not the GPU VRAM !
+
+**Tweaking the `Dataloader`**
+
+- `num_workers` controls how many CPU **processes** PyTorch’s DataLoader uses to prepare batches in parallel.
+- with `num_workers=0`, everything runs in the main process → slow and blocking
+- with `num_workers` being too high, there might be high RAM usage
+
+**Pinning memory**
+
+```python
+DataLoader(..., pin_memory=True)
+```
+
+**Non-blocking copies**
+
+```python
+images = images.to(device, non_blocking=True)
+```
+
+Allows the CPU to GPU transfer to happen asynchronously:
+
+-> With pinned memory and non-blocking copies, data transfer overlaps computation
+
+The gains important with this trick when:
+
+- this is impactful when having large batches like 3D images (here batches are rather small)
+- CPU processing is not the bottleneck
+
+### Investigate your memory transfer (AWESOME)
+
+You want to know more about your datatransfer?
+It's possible with NSight
+
+![memory transfer](images/memory_transfer.png)
+
+If you select the event on the timeline and open the stats menu you can see something like this:
+
+![detail HtoD](image-2.png)
+
+What are those 16 Mb?
+Let's think about it"
+
+- From MedNIST, a single 64×64 PNG is `64 × 64 × 1 byte = 4096 bytes ≈ 4 kB`
+- I used batches of 4096 images:  `1024 × 16 kB = 16384 kB ≈ 16 MB`
+
+This is exaclty what we see on the GUI
+
+### Key takeaways (in one glance)
+
+| Scenario               | Script version  | # GPUs | Batch size | Time per epoch      |
+| ---------------------- | --------------- | ------ | ---------- | ------------------- |
+| Baseline               | Initial script  | 1 GPU  | Small      | **217 s / epoch**   |
+| Parallel (inefficient) | Initial script  | 4 GPUs | Small      | **\~180 s / epoch** |
+| Optimized              | Modified script | 4 GPUs | Medium     | **\~9 s / epoch**   |
+
+- **1 → 4 GPUs without code changes** gives only a **modest speedup**  
+    (217 → \~180 s): scaling limited by input pipeline, batch size, and inefficiencies.
+
+- **Script + batch size optimization** unlocks the hardware:
+  - better GPU utilization
+  - Proper data pipeline overlap
+  - Better gpU usage
+
+- End result:
+  - **≈ 24× faster** than the original 1‑GPU baseline
+  - **≈ 20× faster** than the naïve 4‑GPU run
+
+## Why profiling still mattered
+
+Without the trace, we could easily have optimized the wrong thing:
+
+- tried to scale to more GPUs too early (we did this intentionnally)
+- focused on CUDA micro-optimizations first
+- blamed distributed training before understanding the single-GPU case
 
 ### Recap of the workflow when you need to improve your code performance
 

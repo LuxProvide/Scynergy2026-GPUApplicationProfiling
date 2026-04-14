@@ -4,7 +4,6 @@
 
 ### Why measure and profile GPU code?
 
-
 - Wall‑clock runtime alone doesn’t explain *why* a job is slow
 - GPU programming adds complexity:
   - Host ↔ device transfers
@@ -15,32 +14,24 @@
 
 Profiling helps reveal where time is actually spent and what is limiting performance.
 
-
-###  Typical Key Questions Answered via Profiling
+### Typical Key Questions Answered via Profiling
 
 Profiling helps identify where time and resources are actually spent during execution. Common questions it can answer include:
 
 - CPU - I/O Bottlenecks
 Is the GPU frequently idle while waiting for data loading, preprocessing, or host-side work?
-
 - Compute vs. Memory Behavior
 Is application performance limited by computational throughput, or by memory bandwidth and data movement?
-
 - Multi‑GPU Scaling (when applicable)
 Are all GPUs and ranks doing comparable amounts of work, or is load imbalance reducing scalability?
-
 - Synchronization Overhead
 Are MPI, NCCL operations, or synchronization barriers causing GPUs to stall or wait unnecessarily?
-
 - Kernel Launch Overhead
 Is performance affected by launching many small or short-lived kernels?
-
 - GPU Utilization and Occupancy
-Are register pressure, shared memory usage, or low occupancy limiting available parallelism? 
+Are register pressure, shared memory usage, or low occupancy limiting available parallelism?
 
-
-
-  > **Note:** Investigating per‑kernel occupancy and resource usage requires **Nsight Compute**, which is **out of scope for today**.
+> **Note:** Investigating per‑kernel occupancy and resource usage requires **Nsight Compute**, which is **out of scope for today**.
 
 <!-- <!-- explanation that can be given to the audience of the last point: -->
 A GPU runs many threads at the same time.
@@ -49,7 +40,6 @@ Registers, shared memory, Maximum threads / warps / blocks per Streaming Multipr
 If one kernel uses too much of any of these resources per thread or per block, then fewer blocks/warps can fit on an SM at once.
 That reduces occupancy, which may reduce the GPU’s ability to hide latency and keep execution units busy. -->
 
-
 ### Usual workflow
 
 0. **You have a possible performance issue** with time-consuming app/workflow
@@ -57,11 +47,11 @@ That reduces occupancy, which may reduce the GPU’s ability to hide latency and
 2. Run your Profiler on this smaller test case
 3. Identify **top time consumers** in the timeline
 4. Formulate hypotheses → apply changes → re‑profile
-5. Repeat until performance is satisfactory 
+5. Repeat until performance is satisfactory
 
 ### NVIDIA Nsight tool family
 
-**Rule of thumb**
+#### **Rule of thumb**
 
 - **Nsight Systems**
   - System‑wide timeline (CPU, GPU, MPI, I/O)
@@ -70,19 +60,18 @@ That reduces occupancy, which may reduce the GPU’s ability to hide latency and
   - Kernel‑level analysis and metrics
   - Good for: *“Why is this kernel so slow?”*
 
-Today focus on **Nsight Systems** 
+Today focus on **Nsight Systems**
 
 ### High-level workflow when using Nsight
 
 Two main steps:
-- Producing a trace with Nsight-Systems (`.nsys-rep` extension)
-- Post-process the output with the Nsight-Systems GUI and its command line tools to analyze this trace 
 
+- Producing a trace with Nsight-Systems (`.nsys-rep` extension)
+- Post-process the output with the Nsight-Systems GUI and its command line tools to analyze this trace
 
 ## Opening your first trace
 
-
-### A short word on what we will look at 
+### A short word on what we will look at
 
 Today's workshop is about [MonAI](https://project-monai.github.io/) training
 
@@ -90,8 +79,7 @@ Today's workshop is about [MonAI](https://project-monai.github.io/) training
 
 More specifically, we will work on the training of a classification model aimed at classifying medical images:
 
-![](images/example_from_mednist_dataset.png)
-
+![dataexample](images/example_from_mednist_dataset.png)
 
 ### First step: setting up the environment
 
@@ -113,8 +101,7 @@ nsys-ui $TRACE_1GPU_BASE
 ```
 
 - Here we look at the trace corresponding to the code `Scripts/script_basic_1g.py`
-- This is what you would get from a "naive" training code running on one GPU only 
-
+- This is what you would get from a "naive" training code running on one GPU only
 
 ![alt text](<images/Screenshot 2026-04-11 at 13.04.13.png>)
 
@@ -122,11 +109,9 @@ nsys-ui $TRACE_1GPU_BASE
 
 ![alt text](images/image-5.png)
 
-
 #### Zoom on a part of the timeline
 
 Hover your mouse over a region of interest by keeping the left button of your mouse pressed.
-
 
 ![alt text](<Screenshot 2026-04-13 at 14.31.13.png>)
 
@@ -134,8 +119,7 @@ Right click and select "Filter and Zoom in"
 
 ![alt text](<Screenshot 2026-04-13 at 14.31.39.png>)
 
-
-Look at the timeline! 
+Look at the timeline!
 
 ![alt text](<Screenshot 2026-04-13 at 14.32.57.png>)
 
@@ -145,19 +129,18 @@ Only select one repetition of the pattern we see all along the epoch and let's h
 
 ![alt text](<images/Screenshot 2026-04-11 at 14.22.38.png>)
 
-#### Identifying the culprit 
+#### Identifying the culprit
 
 ![alt text](images/image-2b.png)
 
-
 ![alt text](images/image-3b.png)
-
 
 ---
 
 ### First observations
 
 From the screenshot alone:
+
 - ⚠️ GPU utilization is **low**
 - ⚠️GPU memory usage is **stable but minimal**
 - ⚠️ Most work runs on the **default stream**
@@ -166,23 +149,21 @@ From the screenshot alone:
 - ⚠️ **Large GPU gaps** between training steps
 - ❌ **Data loading is the dominant bottleneck**
 
-___
-### Side note 
+
+### Side note
 
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
--> This can be very handy if you have a lot of traces 
-
+-> This can be very handy if you have a lot of traces
 
 ![alt text](images/image-11.png)
 
-
 ---
+
 ### Let's dig into the command to generate the trace
 
 ```bash
 nsys-profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
 ```
-
 
 ```bash
 NSYS_OPTIONS="--cuda-memory-usage=true \
@@ -192,14 +173,13 @@ NSYS_OPTIONS="--cuda-memory-usage=true \
     -t cuda,nvtx"
 ```
 
-- **`--cuda-memory-usage`**: Tracks VRAM footprint 
-- **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code 
+- **`--cuda-memory-usage`**: Tracks VRAM footprint
+- **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code
 - **`--output`**: Defines the path for the `.nsys-rep` file.
 - **`-t cuda`**: Traces GPU kernels, memory copies, and API calls.
 - **`-t nvtx`**: Traces user-defined code annotations (e.g., "Epoch 1", "Optimizer").
 
 > **NVTX annotations** allow you to label phases of your application (e.g. data loading, forward pass, backward pass), making both the GUI timeline and CLI reports much easier to interpret.
-
 
 ```python
 import torch
@@ -270,7 +250,6 @@ with nvtx_range("training_step"):
         optimizer.step()
 ```
 
-
 ### Only profile what is needed (when possible)
 
 Those 2 flags:
@@ -289,41 +268,39 @@ profiler.start()
 profiler.stop()
 ```
 
-allow us to profile only what we need ! 
+allow us to profile only what we need !
 In our case here we skip:
+
 - the import part
 - what is outside the training loop (could be the testing phase for example)
 
-
-#### Other useful options 
+#### Other useful options
 
 For collection, you can also reduce trace size and overhead with `--delay` and/or `--duration`
-
 
 ## Nsight Systems CLI
 
 - once you have your `.nsys-rep`, you can also use the CLI to post-process the profiling output
 - `nsys` can post-process existing `.nsys-rep` or SQLite results using `stats`, `analyze`, `export`, and `recipe`
 
-### Main commands 
+### Main commands
 
-- `nsys stats` → generate statistical summaries 
-- `nsys analyze` → generate an expert-systems report 
-- `nsys export` → generate an export file from an existing `.nsys-rep`. 
-
+- `nsys stats` → generate statistical summaries
+- `nsys analyze` → generate an expert-systems report
+- `nsys export` → generate an export file from an existing `.nsys-rep`.
 
 #### `nsys stats`
- 
+
 ```bash
 nsys stats report.nsys-rep
 ```
 
-*   `nsys stats` is the quickest way to get useful text summaries from a saved report. 
-*   It accepts either `.nsys-rep` or SQLite input.
+- `nsys stats` is the quickest way to get useful text summaries from a saved report.
+- It accepts either `.nsys-rep` or SQLite input.
 
 ##### Example
 
-We can filter by `nvtx` range which is very handy to only focus on a `nvtx` range 
+We can filter by `nvtx` range which is very handy to only focus on a `nvtx` range
 
 ```bash
 $ nsys stats --force-overwrite --filter-nvtx=training_step/10  $TRACE_1GPU_BASE 
@@ -348,7 +325,7 @@ Processing [single_gpu_base.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/
       0.0        1,716,235          1        1,716,235.0        1,716,235.0        1,716,235        1,716,235          0.0  PushPop  :loss_computation
 ```
 
-BUT ... unfortunately the "parent" nvtx ranges are taken into account in the computations of the relative time. 
+BUT ... unfortunately the "parent" nvtx ranges are taken into account in the computations of the relative time.
 
 > ⚠️ **Important:** Parent NVTX ranges are included in relative time calculations, which can skew percentages when nested ranges are used.
 
@@ -356,8 +333,7 @@ Here we have all the reports that are generated but we can ask for some specific
 
 For most GPU/HPC work, I’d start with these:
 
-
-- `nsys stats --report nvtx_sum` → phase-level timing from your annotations 
+- `nsys stats --report nvtx_sum` → phase-level timing from your annotations
 - `nsys stats --report cuda_gpu_mem_time_sum` → How much GPU time is being spent on memory operations instead of kernels?
 - `nsys stats --report cuda_gpu_kern_sum:base` →  tells you where GPU compute time goes
 - `nsys stats --report cuda_kern_exec_sum:base` → tells you more than just kernel runtime: it summarizes the full launch-to-execution path for each kernel launch, including API time, queue time, kernel time, and total time
@@ -429,9 +405,7 @@ Processing [basic_1g_p.mel2151.25580.sqlite] with [/mnt/tier2/apps/USE/easybuild
 
 As you can see we get:
 
-
 <pre><code><span style="background-color: #ffeb3b; color: black; font-weight: bold;">GPU Gaps (gpu_gaps):</span>
 There were no problems detected with GPU utilization. GPU was not found to be
 idle for more than 500ms.
 </code></pre>
-

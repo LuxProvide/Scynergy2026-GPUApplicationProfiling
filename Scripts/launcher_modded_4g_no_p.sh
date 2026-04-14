@@ -18,7 +18,7 @@ export USE_PROFILER="false"
 export USE_DISTRIBUTED="true"
 source setup_environment.sh
 
-export BATCH_SIZE=512
+export BATCH_SIZE=2048
 export NUM_WORKERS=8
 export PRE_FETCH_FACTOR=2
 
@@ -32,7 +32,7 @@ TORCHRUN_COMMAND="torchrun \
     ${PROJECT_DIR}/script_modded_4g.py"
 
 
-if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+if command -v srun > /dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
     srun \
     --ntasks-per-node=1 \
     --gpus-per-task=4 \

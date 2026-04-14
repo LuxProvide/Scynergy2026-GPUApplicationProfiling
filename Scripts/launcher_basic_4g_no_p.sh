@@ -28,7 +28,7 @@ TORCHRUN_COMMAND="torchrun \
     ${PROJECT_DIR}/script_basic_4g.py"
 
 
-if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+if command -v srun /dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
     srun --cpu-bind=cores -N1 --gpus=4 \
             --ntasks-per-node=1 --kill-on-bad-exit=1 \
             bash -c "${TORCHRUN_COMMAND}" 

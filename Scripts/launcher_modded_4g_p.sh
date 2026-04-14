@@ -20,7 +20,6 @@ source setup_environment.sh
 export PYTHONUNBUFFERED=1
 
 export OMP_NUM_THREADS=1
-
 export BATCH_SIZE=1024
 export NUM_WORKERS=8
 export PRE_FETCH_FACTOR=2
@@ -40,18 +39,8 @@ TORCHRUN_COMMAND="torchrun \
     --log_dir ${PROJECT_DIR}/log_torch \
     ${PROJECT_DIR}/script_modded_4g.py"
 
-srun \
-  --ntasks-per-node=1 \
-  --gpus-per-task=4 \
-  --cpus-per-task=8 \
-  --hint=nomultithread \
-  --gpu-bind=map_gpu:0,1,2,3 \
-  --cpu-bind=cores \
-  --mem-bind=local bash -c "nsys profile \
-        ${NSYS_OPTIONS} \
-        ${TORCHRUN_COMMAND}"
 
-if command -v srun >/dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
+if command -v srun /dev/null 2>&1 && [[ -n "$SLURM_JOB_ID" ]]; then
     srun \
     --ntasks-per-node=1 \
     --gpus-per-task=4 \

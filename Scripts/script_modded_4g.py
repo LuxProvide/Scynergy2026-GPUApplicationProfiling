@@ -38,7 +38,8 @@ import numpy as np
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import roc_auc_score
-from monai.data import DataLoader, Dataset, CacheDataset
+from monai.data.dataloader import DataLoader
+from monai.data import Dataset, CacheDataset
 from monai.networks.nets import DenseNet121
 from monai.transforms import (
     Activations,
@@ -52,6 +53,7 @@ from monai.transforms import (
 )
 from monai.utils import set_determinism
 import torch.distributed as dist
+from sklearn.metrics import classification_report, roc_auc_score
 from torch.nn.parallel import DistributedDataParallel as DDP
 from dataset_utils import build_mednist_index, split_dataset
 from visualization import show_example_images, write_convergence_plots
@@ -160,7 +162,9 @@ def main():
     model = DenseNet121(spatial_dims=2, in_channels=1, out_channels=num_class).to(
         device, non_blocking=True
     )
-    model = model.to(memory_format=torch.channels_last)
+    # recommended on some blog posts but disastrous for the performance of this model, so not using it
+    # model = model.to(memory_format=torch.channels_last)
+
     if dist.is_initialized():
         model = DDP(model, device_ids=[int(os.environ["LOCAL_RANK"])])
         model.register_comm_hook(None, default_hooks.fp16_compress_hook)
@@ -179,6 +183,10 @@ def main():
     current_epoch = 0
 
     profiler.start()
+    import time 
+    if is_main_process():
+        start_time = time.time()
+
     for epoch in range(MAX_EPOCHS):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
@@ -206,8 +214,8 @@ def main():
             nvtx.range_push("wait_for_batch")
             inputs = batch_data["img"].to(device, non_blocking=True)
             labels = batch_data["label"].to(device, non_blocking=True)
+
             inputs = gpu_aug(inputs)
-            inputs = inputs.to(memory_format=torch.channels_last)
             nvtx.range_pop()
             optimizer.zero_grad(set_to_none=True)
             with torch.autocast(
@@ -320,6 +328,10 @@ def main():
         )
     if writer is not None:
         writer.close()
+
+    if is_main_process():
+        end = time.time()
+        print(f"Total training time: {end - start_time:.2f} seconds")
     profiler.stop()
 
     if os.getenv("PERFORM_MODEL_EVALUATION", "false").lower() == "true":

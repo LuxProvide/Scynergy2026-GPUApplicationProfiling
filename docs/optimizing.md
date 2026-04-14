@@ -53,9 +53,6 @@ At this point we can state that:
 
 ### Starting point
 
-
-
-
 ```bash
 cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
 ```

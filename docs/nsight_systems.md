@@ -149,7 +149,6 @@ From the screenshot alone:
 - ⚠️ **Large GPU gaps** between training steps
 - ❌ **Data loading is the dominant bottleneck**
 
-
 ### Side note
 
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.

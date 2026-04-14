@@ -15,7 +15,8 @@ Open your web browser and navigate to the MeluXina OpenOnDemand portal:
 
 **https://portal.lxp.lu/**
 
-<img src="images/image.png" width="700">
+<!-- ![](./images/check_images_cuda.png) -->
+![](./images/image.png)
 
 
 Log in with your credentials.  
@@ -39,8 +40,10 @@ This application allows you to start a graphical remote session on MeluXina, whi
 ### Choosing the appropriate job options
 
 Configure the desktop job with the appropriate parameters for the tutorial.
+See also [here](https://luxprovide.github.io/SCynergy2026-GettingStartedWithMeluXina/urban_wind_simulation/#open-paraview)
 
 <img src="image-7.png" width="700">
+
 
 
 Recommended settings:

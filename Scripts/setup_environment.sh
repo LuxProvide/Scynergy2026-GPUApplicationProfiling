@@ -67,6 +67,9 @@ else
         done
     fi
 
+    export USE_DISTRIBUTED=${USE_DISTRIBUTED:-"false"}
+    export USE_PROFILER=${USE_PROFILER:-"false"}
+
     export ALREADY_SETUP="true"
 
 fi

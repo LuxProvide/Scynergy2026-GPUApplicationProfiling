@@ -1,45 +1,50 @@
-
 # Your turn to look at a trace 
 
 This time, you are in command.
 You will do two things:
-- open another trace and comment on it
+
+- open a trace of the same training but distributed on 4 GPUs and analyze it
 - profile a better performing code, open the trace, experiment what happens when the parameters are being changed 
 
 
 ## What if we try something brute force and just increase the number of GPUs used i? 
 
----
-
-
-run the following: 
+Still from your OpenOnDemand terminal run the following: 
 
 ```bash
 nsys-ui $TRACE_4GPU_BASE
 ```
 
-Let's take 10 minutes for you to play around with this trace and then we will debrief  
+Your Nsight-systems UI should look like this:
 
 ![alt text](images/image-12.png)
 
----
+- Let's take 10 minutes for you to play around with this trace and then we will debrief  
+
 ## Observations
 
 - We knew that the problem was not coming from the GPU usage when using 1 GPU 
 - Still, we wanted to see if using 4 GPUs would reduce the training time 
-- still a lot of gaps in the individual activity of the GPU in the distributed training
-- single GPU: 217 sec for the epoch
-- 4 GPUs: 179 sec
+- Obviously, still a lot of gaps in the individual activity of the GPU in the distributed training
+- We just duplicated the problem
 
-⚠️ 4x more GPU power but 18% improvement in runtime 
+
+| Configuration | Time per Epoch | Speedup vs. 1 GPU | Scaling Efficiency |
+|---|---:|---:|---:|
+| 1 GPU | 217 s | 1.00× | 100.0% |
+| 4 GPUs | 179 s | 1.21× | 30.3% |
+
+
+⚠️ 4x more GPU power but 21% speedup only  
+
+---
+
 ⚠️ My ennemy is still the same: the dataloader  
 
 ---
 
-<!-- _class: lead -->
-## What can kill the performance that much ? 
+## What to change to improve performances
 
-<!-- _class: lead -->
 
 ### Your turn to investigate 
 
@@ -66,8 +71,9 @@ cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/S
 To launch the script **from the OpenOnDemand** terminal:
 
 ```bash
-source launcher_modded_4g_p.sh 
+bash launcher_modded_4g_p.sh 
 ```
+
 
 ---
 ### Openning the trace

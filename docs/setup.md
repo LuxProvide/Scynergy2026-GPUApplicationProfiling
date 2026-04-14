@@ -64,7 +64,7 @@ After the job starts, OpenOnDemand will show it under My Interactive Sessions.
 Click **Launch Desktop** to connect to your session.
 
 
-![](./images/image-3.png)
+![alt text](images/image-7b.png)
 
 This will open a browser-based desktop connected to the allocated MeluXina resources.
 No other software is required on your local machine ! 

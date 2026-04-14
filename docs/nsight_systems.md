@@ -42,7 +42,7 @@ Are register pressure, shared memory usage, or low occupancy limiting available 
 
   > **Note:** Investigating per‑kernel occupancy and resource usage requires **Nsight Compute**, which is **out of scope for today**.
 
-<!-- explanation that can be given to the audience ofr the last point:
+<!-- <!-- explanation that can be given to the audience of the last point: -->
 A GPU runs many threads at the same time.
 But each Streaming Multiprocessor (SM) has limited resources, such as
 Registers, shared memory, Maximum threads / warps / blocks per Streaming Multiprocessor
@@ -102,6 +102,8 @@ cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
 cd Scripts
 source setup_environment.sh
 ```
+
+This will create and configure a python virtual environment as well as environment variables that will be used all along this training.
 
 ### Second step: Using `nsys-ui` to open the trace  
 

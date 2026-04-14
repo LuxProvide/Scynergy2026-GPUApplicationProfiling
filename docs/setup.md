@@ -30,7 +30,7 @@ After successful authentication, you will be redirected to the OpenOnDemand home
 
 From the OpenOnDemand landing page, open the **Interactive Apps** menu and select the **Desktop** application.
 
-<img src="images/image-1.png" width="700">
+![](./images/image-1.png)
 
 
 This application allows you to start a graphical remote session on MeluXina, which is useful for running tools that require a desktop environment.
@@ -42,8 +42,7 @@ This application allows you to start a graphical remote session on MeluXina, whi
 Configure the desktop job with the appropriate parameters for the tutorial.
 See also [here](https://luxprovide.github.io/SCynergy2026-GettingStartedWithMeluXina/urban_wind_simulation/#open-paraview)
 
-<img src="image-7.png" width="700">
-
+![](./images/image-7.png)
 
 
 Recommended settings:
@@ -64,7 +63,8 @@ Once the job is submitted, OpenOnDemand will queue it and prepare your interacti
 After the job starts, OpenOnDemand will show it under My Interactive Sessions.
 Click **Launch Desktop** to connect to your session.
 
-<img src="images/image-3.png" width="700">
+
+![](./images/image-3.png)
 
 This will open a browser-based desktop connected to the allocated MeluXina resources.
 No other software is required on your local machine ! 
@@ -75,7 +75,7 @@ No other software is required on your local machine !
 
 Inside the remote desktop session, open a terminal window.
 
-<img src="images/image-4.png" width="700">
+![](./images/image-4.png)
 
 The terminal will be used for all command-line operations in this tutorial, including navigating directories, cloning the repository, and running profiling commands.
 

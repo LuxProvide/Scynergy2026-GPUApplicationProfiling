@@ -2,7 +2,8 @@
 
 ## Intro
 
-### Why Measuring/profiling GPU code?
+### Why measure and profile GPU code?
+
 
 - Wall‑clock runtime alone doesn’t explain *why* a job is slow
 - GPU programming adds complexity:
@@ -10,13 +11,14 @@
   - Kernel launches and occupancy
   - Memory hierarchy (global / shared / L2 / registers)
   - NCCL communication
+  - CPU-side bottlenecks such as data loading and preprocessing
+
+Profiling helps reveal where time is actually spent and what is limiting performance.
 
 
 ###  Typical Key Questions Answered via Profiling
 
-
 Profiling helps identify where time and resources are actually spent during execution. Common questions it can answer include:
-
 
 - CPU - I/O Bottlenecks
 Is the GPU frequently idle while waiting for data loading, preprocessing, or host-side work?
@@ -34,7 +36,11 @@ Are MPI, NCCL operations, or synchronization barriers causing GPUs to stall or w
 Is performance affected by launching many small or short-lived kernels?
 
 - GPU Utilization and Occupancy
-Are register pressure, shared memory usage, or low occupancy limiting available parallelism? --> This requires another tool than the one that we will see today 
+Are register pressure, shared memory usage, or low occupancy limiting available parallelism? 
+
+
+
+  > **Note:** Investigating per‑kernel occupancy and resource usage requires **Nsight Compute**, which is **out of scope for today**.
 
 <!-- explanation that can be given to the audience ofr the last point:
 A GPU runs many threads at the same time.
@@ -48,12 +54,14 @@ That reduces occupancy, which may reduce the GPU’s ability to hide latency and
 
 0. **You have a possible performance issue** with time-consuming app/workflow
 1. **Reproduce the problem** with a shorter test case
-2. Run iyour Profiler on this smaller test case
+2. Run your Profiler on this smaller test case
 3. Identify **top time consumers** in the timeline
 4. Formulate hypotheses → apply changes → re‑profile
 5. Repeat until performance is satisfactory 
 
 ### NVIDIA Nsight tool family
+
+**Rule of thumb**
 
 - **Nsight Systems**
   - System‑wide timeline (CPU, GPU, MPI, I/O)
@@ -71,7 +79,7 @@ Two main steps:
 - Post-process the output with the Nsight-Systems GUI and its command line tools to analyze this trace 
 
 
-## Openning your first trace
+## Opening your first trace
 
 
 ### A short word on what we will look at 
@@ -95,7 +103,7 @@ cd Scripts
 source setup_environment.sh
 ```
 
-### Second step: openning a trace  
+### Second step: Using `nsys-ui` to open the trace  
 
 ```bash
 module load Nsight-Systems
@@ -148,13 +156,13 @@ Only select one repetition of the pattern we see all along the epoch and let's h
 ### First observations
 
 From the screenshot alone:
-✅ GPU is poorly utilized
-✅ Memory usage is stable but low
-⚠️ Almost everything is on default stream
-⚠️ Limited concurrent execution
-✅ CPU is active, not idle
-⚠️ Long GPU gaps in between the training steps   
-⚠️ It is clear that the dataloader is the culprit 
+- ⚠️ GPU utilization is **low**
+- ⚠️GPU memory usage is **stable but minimal**
+- ⚠️ Most work runs on the **default stream**
+- ⚠️ **Limited concurrency** between CPU and GPU
+- ✅ CPU is active (not idle)
+- ⚠️ **Large GPU gaps** between training steps
+- ❌ **Data loading is the dominant bottleneck**
 
 ___
 ### Side note 
@@ -188,6 +196,78 @@ NSYS_OPTIONS="--cuda-memory-usage=true \
 - **`-t cuda`**: Traces GPU kernels, memory copies, and API calls.
 - **`-t nvtx`**: Traces user-defined code annotations (e.g., "Epoch 1", "Optimizer").
 
+> **NVTX annotations** allow you to label phases of your application (e.g. data loading, forward pass, backward pass), making both the GUI timeline and CLI reports much easier to interpret.
+
+
+```python
+import torch
+import torch.cuda.nvtx as nvtx
+
+# Example: annotate a few phases of a training step
+nvtx.range_push("training_step")
+
+nvtx.range_push("data_loading")
+# simulate / perform data loading
+inputs = torch.randn(32, 3, 224, 224, device="cuda")
+targets = torch.randint(0, 10, (32,), device="cuda")
+nvtx.range_pop()
+
+model = torch.nn.Linear(224 * 224 * 3, 10).cuda()
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
+
+nvtx.range_push("forward_pass")
+outputs = model(inputs.view(inputs.size(0), -1))
+loss = torch.nn.functional.cross_entropy(outputs, targets)
+nvtx.range_pop()
+
+nvtx.range_push("backward_pass")
+optimizer.zero_grad()
+loss.backward()
+nvtx.range_pop()
+
+nvtx.range_push("optimizer_step")
+optimizer.step()
+nvtx.range_pop()
+
+nvtx.range_pop()  # end of "training_step"
+```
+
+or even better with context managers (IMO more readable):
+
+```python
+
+import torch
+import torch.cuda.nvtx as nvtx
+from contextlib import contextmanager
+
+@contextmanager
+def nvtx_range(name):
+    nvtx.range_push(name)
+    try:
+        yield
+    finally:
+        nvtx.range_pop()
+
+with nvtx_range("training_step"):
+    with nvtx_range("data_loading"):
+        inputs = torch.randn(32, 3, 224, 224, device="cuda")
+        targets = torch.randint(0, 10, (32,), device="cuda")
+
+    model = torch.nn.Linear(224 * 224 * 3, 10).cuda()
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
+
+    with nvtx_range("forward_pass"):
+        outputs = model(inputs.view(inputs.size(0), -1))
+        loss = torch.nn.functional.cross_entropy(outputs, targets)
+
+    with nvtx_range("backward_pass"):
+        optimizer.zero_grad()
+        loss.backward()
+
+    with nvtx_range("optimizer_step"):
+        optimizer.step()
+```
+
 
 ### Only profile what is needed (when possible)
 
@@ -208,6 +288,9 @@ profiler.stop()
 ```
 
 allow us to profile only what we need ! 
+In our case here we skip:
+- the import part
+- what is outside the training loop (could be the testing phase for example)
 
 
 #### Other useful options 
@@ -264,6 +347,8 @@ Processing [single_gpu_base.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/
 ```
 
 BUT ... unfortunately the "parent" nvtx ranges are taken into account in the computations of the relative time. 
+
+> ⚠️ **Important:** Parent NVTX ranges are included in relative time calculations, which can skew percentages when nested ranges are used.
 
 Here we have all the reports that are generated but we can ask for some specific ones.
 
@@ -347,5 +432,4 @@ As you can see we get:
 There were no problems detected with GPU utilization. GPU was not found to be
 idle for more than 500ms.
 </code></pre>
-
 

@@ -42,7 +42,7 @@ This application allows you to start a graphical remote session on MeluXina, whi
 Configure the desktop job with the appropriate parameters for the tutorial.
 See also [here](https://luxprovide.github.io/SCynergy2026-GettingStartedWithMeluXina/urban_wind_simulation/#open-paraview)
 
-![](./images/image-7.png)
+![](./images/image-2.png)
 
 
 Recommended settings:
@@ -64,7 +64,7 @@ After the job starts, OpenOnDemand will show it under My Interactive Sessions.
 Click **Launch Desktop** to connect to your session.
 
 
-![alt text](images/image-7b.png)
+![alt text](images/image-3.png)
 
 This will open a browser-based desktop connected to the allocated MeluXina resources.
 No other software is required on your local machine ! 

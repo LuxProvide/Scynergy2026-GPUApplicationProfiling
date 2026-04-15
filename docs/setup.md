@@ -99,14 +99,8 @@ git clone https://github.com/LuxProvide/Scynergy2026-GPUApplicationProfiling
 cd Scynergy2026-GPUApplicationProfiling/
 ```
 
-After this step, you should have access to all files needed for the tutorial, including source code, examples, and profiling material.
-
-You are now ready to continue with the hands-on exercises.
-
 ## Next steps
 
-You are now fully set up with:
+After this step, you should have access to all files needed for the tutorial, including source code, examples, and profiling material.
 
-An interactive GPU-enabled desktop session
-Access to the tutorial source code
-A working terminal environment
+You are now ready to continue with a quick demo of NVIDIA NSight-Systems.

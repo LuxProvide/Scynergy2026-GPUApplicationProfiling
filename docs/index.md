@@ -4,7 +4,7 @@
 
 This training is given in the context of the [Scynergy 2026 event](https://www.scynergy.events/). It provides participants with a hands-on introduction to profiling using NVIDIA NSigh-Systems on the [MeluXina supercomputer](https://docs.lxp.lu/system/overview/).
 
-![MeluXina](images/meluxina.jpg){ width="800" }
+![MeluXina](images/meluxina.jpg)
 
 ## 🎯 Objectives
 
@@ -25,7 +25,7 @@ Today's training is composed of:
   - Looking at (already collected) traces of a [MonAI](https://project-monai.github.io/) training on Meluxina  
     - How to navigate on the NSight-Systems GUI
     - How to use the `nsys` CLI to get some stats
-- Hands-on: making a PyTorch Training faster (~60 minutes)
+- Hands-on: making a [MonAI](https://project-monai.github.io/) (PyTorch based) training faster (~60 minutes)
   - Generate your own traces
   - Modify the code to accelerate it
 

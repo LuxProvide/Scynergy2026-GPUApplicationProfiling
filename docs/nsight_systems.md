@@ -4,13 +4,14 @@
 
 ### Why measure and profile GPU code?
 
-- Wall‑clock runtime alone doesn’t explain *why* a job is slow
-- GPU programming adds complexity:
-  - Host ↔ device transfers
-  - Kernel launches and occupancy
-  - Memory hierarchy (global / shared / L2 / registers)
-  - NCCL communication
-  - CPU-side bottlenecks such as data loading and preprocessing
+Wall‑clock runtime alone doesn’t explain *why* a job is slow.
+GPU programming adds complexity:
+
+    - Host ↔ device transfers
+    - Kernel launches and occupancy
+    - Memory hierarchy (global / shared / L2 / registers)
+    - NCCL communication
+    - CPU-side bottlenecks such as data loading and preprocessing
 
 Profiling helps reveal where time is actually spent and what is limiting performance.
 
@@ -18,22 +19,22 @@ Profiling helps reveal where time is actually spent and what is limiting perform
 
 Profiling helps identify where time and resources are actually spent during execution. Common questions it can answer include:
 
-- CPU - I/O Bottlenecks
+- CPU - I/O Bottlenecks:
 Is the GPU frequently idle while waiting for data loading, preprocessing, or host-side work?
-- Compute vs. Memory Behavior
+- Compute vs. Memory Behavior:
 Is application performance limited by computational throughput, or by memory bandwidth and data movement?
-- Multi‑GPU Scaling (when applicable)
+- Multi‑GPU Scaling (when applicable):
 Are all GPUs and ranks doing comparable amounts of work, or is load imbalance reducing scalability?
-- Synchronization Overhead
+- Synchronization Overhead:
 Are MPI, NCCL operations, or synchronization barriers causing GPUs to stall or wait unnecessarily?
-- Kernel Launch Overhead
+- Kernel Launch Overhead:
 Is performance affected by launching many small or short-lived kernels?
-- GPU Utilization and Occupancy
+- GPU Utilization and Occupancy:
 Are register pressure, shared memory usage, or low occupancy limiting available parallelism?
 
 > **Note:** Investigating per‑kernel occupancy and resource usage requires **Nsight Compute**, which is **out of scope for today**.
 
-<!-- <!-- explanation that can be given to the audience of the last point: -->
+<!-- explanation that can be given to the audience of the last point: 
 A GPU runs many threads at the same time.
 But each Streaming Multiprocessor (SM) has limited resources, such as
 Registers, shared memory, Maximum threads / warps / blocks per Streaming Multiprocessor
@@ -42,14 +43,18 @@ That reduces occupancy, which may reduce the GPU’s ability to hide latency and
 
 ### Usual workflow
 
-0. **You have a possible performance issue** with time-consuming app/workflow
+0. **You identified a possible performance issue** with time-consuming app/workflow
 1. **Reproduce the problem** with a shorter test case
 2. Run your Profiler on this smaller test case
-3. Identify **top time consumers** in the timeline
+3. Analyze the timeline, Identify **top time consumers**
 4. Formulate hypotheses → apply changes → re‑profile
 5. Repeat until performance is satisfactory
 
 ### NVIDIA Nsight tool family
+
+Today, we will focus on **Nsight Systems**
+
+**[NVIDIA Nsight Systems](https://developer.nvidia.com/nsight-systems)** is a system‑wide performance analysis tool that provides a unified timeline of CPU, GPU, CUDA, and OS activity.
 
 #### **Rule of thumb**
 
@@ -60,9 +65,7 @@ That reduces occupancy, which may reduce the GPU’s ability to hide latency and
   - Kernel‑level analysis and metrics
   - Good for: *“Why is this kernel so slow?”*
 
-Today focus on **Nsight Systems**
-
-### High-level workflow when using Nsight
+### High-level workflow when using Nsight-Systems
 
 Two main steps:
 
@@ -71,9 +74,7 @@ Two main steps:
 
 ## Opening your first trace
 
-### A short word on what we will look at
-
-Today's workshop is about [MonAI](https://project-monai.github.io/) training
+Today's workshop is about a [MonAI](https://project-monai.github.io/) model training
 
 ![alt text](images/MonAILogo.png)
 
@@ -94,6 +95,9 @@ source setup_environment.sh
 This will create and configure a python virtual environment as well as environment variables that will be used all along this training.
 
 ### Second step: Using `nsys-ui` to open the trace  
+
+Once the profiling is done, NSight generates a trace that has the `.nsys-rep` extension.
+We are going to analyze such a trace.
 
 ```bash
 module load Nsight-Systems
@@ -133,7 +137,14 @@ Only select one repetition of the pattern we see all along the epoch and let's h
 
 ![alt text](images/image-2b.png)
 
-![alt text](images/image-3b.png)
+Let's see the associated lines in the code.
+
+```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
+vi Scripts/script_basic_1g.py
+```
+
+![culprit](images/culprit.png)
 
 ---
 
@@ -152,7 +163,7 @@ From the screenshot alone:
 ### Side note
 
 In the GUI, you can select the analysis summary allows you to retrieve which command line you used to obtain the trace.
--> This can be very handy if you have a lot of traces
+-> This can be very handy if you have generated a lot of traces during your experiments
 
 ![alt text](images/image-11.png)
 
@@ -173,47 +184,24 @@ NSYS_OPTIONS="--cuda-memory-usage=true \
 ```
 
 - **`--cuda-memory-usage`**: Tracks VRAM footprint
-- **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code
+- **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code (see below for more details)
 - **`--output`**: Defines the path for the `.nsys-rep` file.
 - **`-t cuda`**: Traces GPU kernels, memory copies, and API calls.
 - **`-t nvtx`**: Traces user-defined code annotations (e.g., "Epoch 1", "Optimizer").
 
 > **NVTX annotations** allow you to label phases of your application (e.g. data loading, forward pass, backward pass), making both the GUI timeline and CLI reports much easier to interpret.
 
+Example of snippet:
+
 ```python
-import torch
-import torch.cuda.nvtx as nvtx
-
-# Example: annotate a few phases of a training step
-nvtx.range_push("training_step")
-
 nvtx.range_push("data_loading")
 # simulate / perform data loading
 inputs = torch.randn(32, 3, 224, 224, device="cuda")
 targets = torch.randint(0, 10, (32,), device="cuda")
 nvtx.range_pop()
-
-model = torch.nn.Linear(224 * 224 * 3, 10).cuda()
-optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
-
-nvtx.range_push("forward_pass")
-outputs = model(inputs.view(inputs.size(0), -1))
-loss = torch.nn.functional.cross_entropy(outputs, targets)
-nvtx.range_pop()
-
-nvtx.range_push("backward_pass")
-optimizer.zero_grad()
-loss.backward()
-nvtx.range_pop()
-
-nvtx.range_push("optimizer_step")
-optimizer.step()
-nvtx.range_pop()
-
-nvtx.range_pop()  # end of "training_step"
 ```
 
-or even better with context managers (IMO more readable):
+or even better with context managers (more readable):
 
 ```python
 
@@ -233,20 +221,6 @@ with nvtx_range("training_step"):
     with nvtx_range("data_loading"):
         inputs = torch.randn(32, 3, 224, 224, device="cuda")
         targets = torch.randint(0, 10, (32,), device="cuda")
-
-    model = torch.nn.Linear(224 * 224 * 3, 10).cuda()
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-2)
-
-    with nvtx_range("forward_pass"):
-        outputs = model(inputs.view(inputs.size(0), -1))
-        loss = torch.nn.functional.cross_entropy(outputs, targets)
-
-    with nvtx_range("backward_pass"):
-        optimizer.zero_grad()
-        loss.backward()
-
-    with nvtx_range("optimizer_step"):
-        optimizer.step()
 ```
 
 ### Only profile what is needed (when possible)
@@ -277,6 +251,8 @@ In our case here we skip:
 
 For collection, you can also reduce trace size and overhead with `--delay` and/or `--duration`
 
+> **Once `nsys profile` is done**, you obtain a trace. It has the `.nsys-rep` format
+
 ## Nsight Systems CLI
 
 - once you have your `.nsys-rep`, you can also use the CLI to post-process the profiling output
@@ -285,13 +261,12 @@ For collection, you can also reduce trace size and overhead with `--delay` and/o
 ### Main commands
 
 - `nsys stats` → generate statistical summaries
-- `nsys analyze` → generate an expert-systems report
-- `nsys export` → generate an export file from an existing `.nsys-rep`.
+- `nsys analyze` → generate an expert-systems report --> those are actually quite easy to understand and can be very helpful for the big-picture of the problems in your code execution
 
 #### `nsys stats`
 
 ```bash
-nsys stats report.nsys-rep
+nsys stats $TRACE_1GPU_BASE
 ```
 
 - `nsys stats` is the quickest way to get useful text summaries from a saved report.

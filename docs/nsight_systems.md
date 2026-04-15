@@ -86,11 +86,11 @@ More specifically, we will work on the training of a classification model aimed 
 
 Open a terminal in your OOD session and run:
 
-    ```bash
-    cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
-    cd Scripts
-    source setup_environment.sh
-    ```
+```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
+cd Scripts
+source setup_environment.sh
+```
 
 This will create and configure a python virtual environment as well as environment variables that will be used all along this training.
 
@@ -99,10 +99,10 @@ This will create and configure a python virtual environment as well as environme
 Once the profiling is done, NSight generates a trace that has the `.nsys-rep` extension.
 We are going to analyze such a trace.
 
-    ```bash
-    module load Nsight-Systems
-    nsys-ui $TRACE_1GPU_BASE
-    ```
+```bash
+module load Nsight-Systems
+nsys-ui $TRACE_1GPU_BASE
+```
 
 - Here we look at the trace corresponding to the code `Scripts/script_basic_1g.py`
 - This is what you would get from a "naive" training code running on one GPU only
@@ -139,10 +139,10 @@ Only select one repetition of the pattern we see all along the epoch and let's h
 
 Let's see the associated lines in the code.
 
-    ```bash
-    cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
-    vi Scripts/script_basic_1g.py
-    ```
+```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/
+vi Scripts/script_basic_1g.py
+```
 
 ![culprit](images/culprit.png)
 
@@ -171,17 +171,17 @@ In the GUI, you can select the analysis summary allows you to retrieve which com
 
 ### Let's dig into the command to generate the trace
 
-    ```bash
-    nsys-profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
-    ```
+```bash
+nsys-profile ${NSYS_OPTIONS} ${TORCHRUN_COMMAND}
+```
 
-    ```bash
-    NSYS_OPTIONS="--cuda-memory-usage=true \
-        --capture-range=cudaProfilerApi \
-        --capture-range-end=stop \
-        --output=${output_file} \
-        -t cuda,nvtx"
-    ```
+```bash
+NSYS_OPTIONS="--cuda-memory-usage=true \
+    --capture-range=cudaProfilerApi \
+    --capture-range-end=stop \
+    --output=${output_file} \
+    -t cuda,nvtx"
+```
 
 - **`--cuda-memory-usage`**: Tracks VRAM footprint
 - **`--capture-range=cudaProfilerApi`**: Only profiles the code between `start()` and `stop()` calls in the python code (see below for more details)
@@ -193,52 +193,52 @@ In the GUI, you can select the analysis summary allows you to retrieve which com
 
 Example of snippet:
 
-    ```python
-    nvtx.range_push("data_loading")
-    # simulate / perform data loading
-    inputs = torch.randn(32, 3, 224, 224, device="cuda")
-    targets = torch.randint(0, 10, (32,), device="cuda")
-    nvtx.range_pop()
-    ```
+```python
+nvtx.range_push("data_loading")
+# simulate / perform data loading
+inputs = torch.randn(32, 3, 224, 224, device="cuda")
+targets = torch.randint(0, 10, (32,), device="cuda")
+nvtx.range_pop()
+```
 
 or even better with context managers (more readable):
 
-    ```python
+```python
 
-    import torch
-    import torch.cuda.nvtx as nvtx
-    from contextlib import contextmanager
+import torch
+import torch.cuda.nvtx as nvtx
+from contextlib import contextmanager
 
-    @contextmanager
-    def nvtx_range(name):
-        nvtx.range_push(name)
-        try:
-            yield
-        finally:
-            nvtx.range_pop()
+@contextmanager
+def nvtx_range(name):
+    nvtx.range_push(name)
+    try:
+        yield
+    finally:
+        nvtx.range_pop()
 
-    with nvtx_range("training_step"):
-        with nvtx_range("data_loading"):
-            inputs = torch.randn(32, 3, 224, 224, device="cuda")
-            targets = torch.randint(0, 10, (32,), device="cuda")
-    ```
+with nvtx_range("training_step"):
+    with nvtx_range("data_loading"):
+        inputs = torch.randn(32, 3, 224, 224, device="cuda")
+        targets = torch.randint(0, 10, (32,), device="cuda")
+```
 
 ### Only profile what is needed (when possible)
 
 Those 2 flags:
 
-    ```bash
-    --capture-range=cudaProfilerApi \
-    --capture-range-end=stop \
-    ```
+```bash
+--capture-range=cudaProfilerApi \
+--capture-range-end=stop \
+```
 
 in conjunction with these functions in your python script:
 
-    ```python
-    import torch.cuda.profiler as profiler
-    profiler.start()
-    ...
-    profiler.stop()
+```python
+import torch.cuda.profiler as profiler
+profiler.start()
+...
+profiler.stop()
     ```
 
 allow us to profile only what we need !
@@ -265,9 +265,9 @@ For collection, you can also reduce trace size and overhead with `--delay` and/o
 
 #### `nsys stats`
 
-    ```bash
-    nsys stats $TRACE_1GPU_BASE
-    ```
+```bash
+nsys stats $TRACE_1GPU_BASE
+```
 
 - `nsys stats` is the quickest way to get useful text summaries from a saved report.
 - It accepts either `.nsys-rep` or SQLite input.
@@ -276,28 +276,28 @@ For collection, you can also reduce trace size and overhead with `--delay` and/o
 
 We can filter by `nvtx` range which is very handy to only focus on a `nvtx` range
 
-    ```bash
-    $ nsys stats --force-overwrite --filter-nvtx=training_step/10  $TRACE_1GPU_BASE 
+```bash
+$ nsys stats --force-overwrite --filter-nvtx=training_step/10  $TRACE_1GPU_BASE 
 
-    NOTICE: Existing SQLite export found: single_gpu_base.sqlite
-            It is assumed file was previously exported from: single_gpu_base.nsys-rep
-            Consider using --force-export=true if needed.
+NOTICE: Existing SQLite export found: single_gpu_base.sqlite
+        It is assumed file was previously exported from: single_gpu_base.nsys-rep
+        Consider using --force-export=true if needed.
 
-    Processing [single_gpu_base.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/reports/nvtx_sum.py](nvtx=training_step/10)... 
+Processing [single_gpu_base.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/reports/nvtx_sum.py](nvtx=training_step/10)... 
 
-    ** NVTX Range Summary (nvtx_sum):
+** NVTX Range Summary (nvtx_sum):
 
-    Time (%)  Total Time (ns)  Instances      Avg (ns)           Med (ns)          Min (ns)         Max (ns)      StdDev (ns)   Style         Range      
-    --------  ---------------  ---------  -----------------  -----------------  ---------------  ---------------  -----------  -------  -----------------
-        99.0  674,481,948,315          1  674,481,948,315.0  674,481,948,315.0  674,481,948,315  674,481,948,315          0.0  PushPop  :epoch_1         
-        0.5    3,395,466,394          1    3,395,466,394.0    3,395,466,394.0    3,395,466,394    3,395,466,394          0.0  PushPop  :training_step   
-        0.5    3,088,019,032          1    3,088,019,032.0    3,088,019,032.0    3,088,019,032    3,088,019,032          0.0  PushPop  :data_loading    
-        0.0      161,093,381          1      161,093,381.0      161,093,381.0      161,093,381      161,093,381          0.0  PushPop  :model_inference 
-        0.0      123,023,037          1      123,023,037.0      123,023,037.0      123,023,037      123,023,037          0.0  PushPop  :backward_pass   
-        0.0        8,343,032          1        8,343,032.0        8,343,032.0        8,343,032        8,343,032          0.0  PushPop  :optimizer_step  
-        0.0        1,868,965          1        1,868,965.0        1,868,965.0        1,868,965        1,868,965          0.0  PushPop  :forward_backward
-        0.0        1,716,235          1        1,716,235.0        1,716,235.0        1,716,235        1,716,235          0.0  PushPop  :loss_computation
-    ```
+Time (%)  Total Time (ns)  Instances      Avg (ns)           Med (ns)          Min (ns)         Max (ns)      StdDev (ns)   Style         Range      
+--------  ---------------  ---------  -----------------  -----------------  ---------------  ---------------  -----------  -------  -----------------
+    99.0  674,481,948,315          1  674,481,948,315.0  674,481,948,315.0  674,481,948,315  674,481,948,315          0.0  PushPop  :epoch_1         
+    0.5    3,395,466,394          1    3,395,466,394.0    3,395,466,394.0    3,395,466,394    3,395,466,394          0.0  PushPop  :training_step   
+    0.5    3,088,019,032          1    3,088,019,032.0    3,088,019,032.0    3,088,019,032    3,088,019,032          0.0  PushPop  :data_loading    
+    0.0      161,093,381          1      161,093,381.0      161,093,381.0      161,093,381      161,093,381          0.0  PushPop  :model_inference 
+    0.0      123,023,037          1      123,023,037.0      123,023,037.0      123,023,037      123,023,037          0.0  PushPop  :backward_pass   
+    0.0        8,343,032          1        8,343,032.0        8,343,032.0        8,343,032        8,343,032          0.0  PushPop  :optimizer_step  
+    0.0        1,868,965          1        1,868,965.0        1,868,965.0        1,868,965        1,868,965          0.0  PushPop  :forward_backward
+    0.0        1,716,235          1        1,716,235.0        1,716,235.0        1,716,235        1,716,235          0.0  PushPop  :loss_computation
+```
 
 BUT ... unfortunately the "parent" nvtx ranges are taken into account in the computations of the relative time.
 
@@ -318,31 +318,31 @@ For most GPU/HPC work, I’d start with these:
 You can have a great control over what you want to measure from the command line.
 For instance, if you want to have a look at the 10 most time-consumer CUDA kernel  
 
-    ```bash
-    $ nsys stats  --quiet  --force-overwrite   --filter-nvtx=training_step/10   --report cuda_gpu_trace   --format csv   --output -   single_gpu_base.nsys-rep | python3 -c '
-    import csv, sys
-    rows = list(csv.DictReader(sys.stdin))
-    print(rows)
-    rows.sort(key=lambda r: float(r["Duration (ns)"]), reverse=True)
-    w = csv.DictWriter(sys.stdout, fieldnames=rows[0].keys())
-    w.writeheader()
-    w.writerows(rows[:10])
-    ' > top10_cuda_gpu_trace.csv
-    ```
+```bash
+$ nsys stats  --quiet  --force-overwrite   --filter-nvtx=training_step/10   --report cuda_gpu_trace   --format csv   --output -   single_gpu_base.nsys-rep | python3 -c '
+import csv, sys
+rows = list(csv.DictReader(sys.stdin))
+print(rows)
+rows.sort(key=lambda r: float(r["Duration (ns)"]), reverse=True)
+w = csv.DictWriter(sys.stdout, fieldnames=rows[0].keys())
+w.writeheader()
+w.writerows(rows[:10])
+' > top10_cuda_gpu_trace.csv
+```
 
 #### Multiple reports and machine-readable output
 
 You can generate multiple reports at once:
 
-    ```bash
-    nsys stats \
-    --report cuda_gpu_trace \
-    --report cuda_gpu_kern_sum \
-    --report cuda_api_sum \
-    --format csv,column \
-    --output .,- \
-    report.nsys-rep
-    ```
+```bash
+nsys stats \
+--report cuda_gpu_trace \
+--report cuda_gpu_kern_sum \
+--report cuda_api_sum \
+--format csv,column \
+--output .,- \
+report.nsys-rep
+```
 
 #### GOTCHAS
 
@@ -360,22 +360,22 @@ However, if I generate a report from the command line, this can be really mislea
 
 **Example**
 
-    ```bash
-    $ nsys analyze --filter-nvtx=training_step_67 --rule gpu_gaps basic_1g_p.mel2151.25580.nsys-rep 
+```bash
+$ nsys analyze --filter-nvtx=training_step_67 --rule gpu_gaps basic_1g_p.mel2151.25580.nsys-rep 
 
-    NOTICE: Existing SQLite export found: basic_1g_p.mel2151.25580.sqlite
-            It is assumed file was previously exported from: basic_1g_p.mel2151.25580.nsys-rep
-            Consider using --force-export=true if needed.
+NOTICE: Existing SQLite export found: basic_1g_p.mel2151.25580.sqlite
+        It is assumed file was previously exported from: basic_1g_p.mel2151.25580.nsys-rep
+        Consider using --force-export=true if needed.
 
-    Processing [basic_1g_p.mel2151.25580.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/rules/gpu_gaps.py](nvtx=training_step_67)... 
+Processing [basic_1g_p.mel2151.25580.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/rules/gpu_gaps.py](nvtx=training_step_67)... 
 
-    ** GPU Gaps (gpu_gaps):
+** GPU Gaps (gpu_gaps):
 
-    There were no problems detected with GPU utilization. GPU was not found to be
-    idle for more than 500ms.
+There were no problems detected with GPU utilization. GPU was not found to be
+idle for more than 500ms.
 
-    Processing [basic_1g_p.mel2151.25580.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/rules/gpu_time_util.py](nvtx=training_step_67)... 
-    ```
+Processing [basic_1g_p.mel2151.25580.sqlite] with [/mnt/tier2/apps/USE/easybuild/release/2025.1/software/Nsight-Systems/2025.3.1/host-linux-x64/rules/gpu_time_util.py](nvtx=training_step_67)... 
+```
 
 As you can see we get:
 

@@ -1,7 +1,6 @@
 # Your turn to look at a trace
 
-
-Copy the traces we prepared in your folder 
+Copy the traces we prepared in your folder
 
 ```bash
 mkdir -p /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/traces
@@ -18,9 +17,9 @@ You will do two things:
 
 Still from your OpenOnDemand terminal run the following:
 
-  ```bash
-  nsys-ui $TRACE_4GPU_BASE
-  ```
+```bash
+nsys-ui $TRACE_4GPU_BASE
+```
 
 Your Nsight-systems UI should look like this:
 
@@ -61,26 +60,26 @@ At this point we can state that:
 
 ### Starting point
 
-  ```bash
-  cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
-  ```
+```bash
+cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
+```
 
 - Python script to modify: `script_modded_4g.py`
 - Launcher to modify: `source launcher_modded_4g_p.sh`
 
 In particular, play with the following variables
 
-  ```bash
-  export BATCH_SIZE=...
-  export NUM_WORKERS=...
-  export PRE_FETCH_FACTOR=...
-  ```
+```bash
+export BATCH_SIZE=...
+export NUM_WORKERS=...
+export PRE_FETCH_FACTOR=...
+```
 
 To launch the script **from the OpenOnDemand** terminal:
 
-  ```bash
-  bash launcher_modded_4g_p.sh 
-  ```
+```bash
+bash launcher_modded_4g_p.sh 
+```
 
 <div style="background-color:#ffeeba; padding:10px; border-left:5px solid #f0ad4e;">
 <strong>⚠️ Warning</strong><br>
@@ -95,20 +94,20 @@ If possible, try to run the script **outside** of OpenOnDemand.
 
 When your profiling is done, at the end of the output you should get something like:
 
-  ```bash
+```bash
 
-  ...
+...
 
-  train completed, best_metric: 0.8383 at epoch: 1
-  Generated:
-          .../modded_4g_no_p.mel2129.24037.nsys-rep
-  ```
+train completed, best_metric: 0.8383 at epoch: 1
+Generated:
+        .../modded_4g_no_p.mel2129.24037.nsys-rep
+```
 
 Get the path of the ``.nsys-rep`` file and open it with:
 
-  ```bash
-  nsys-ui $THEPATH.nsys-rep
-  ```
+```bash
+nsys-ui $THEPATH.nsys-rep
+```
 
 ---
 
@@ -153,15 +152,15 @@ Caching the Dataset consume some memory on the host RAM but not the GPU VRAM !
 
 **Pinning memory**
 
-  ```python
-  DataLoader(..., pin_memory=True)
-  ```
+```python
+DataLoader(..., pin_memory=True)
+```
 
 **Non-blocking copies**
 
-  ```python
-  images = images.to(device, non_blocking=True)
-  ```
+```python
+images = images.to(device, non_blocking=True)
+```
 
 Allows the CPU to GPU transfer to happen asynchronously:
 
@@ -235,15 +234,15 @@ Without the trace, we could easily have optimized the wrong thing:
 
 - Apply Nsight to your **own applications** on MeluXina to produce traces  
 
-    ```bash
-    nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
-    ```
+```bash
+nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
+```
 
-    or if `srun` is available (outside of OpenOnDemand):
+or if `srun` is available (outside of OpenOnDemand):
 
-    ```bash
-    srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
-    ```
+```bash
+srun ${SRUN_OPTIONS} nsys-profile ${NSYS_OPTIONS} ${YOURBIN}
+```
 
 - Performance optimization guided by profiling results
 

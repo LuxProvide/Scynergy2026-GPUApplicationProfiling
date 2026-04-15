@@ -1,3 +1,7 @@
+"""
+Author: Marco Magliulo
+Affiliation: LuxProvide
+"""
 import torch
 import os
 import PIL

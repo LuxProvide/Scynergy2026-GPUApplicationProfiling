@@ -1,17 +1,11 @@
 """
-------------------------------------------------------------------------------
-This script is the intellectual property of LuxProvide.
+Author: Marco Magliulo
+Affiliation: LuxProvide
 
-Authors: Marco Magliulo and Tom Walter
-
-This code is proprietary and confidential. Unauthorized copying, distribution,
-or modification of this file, via any medium, is strictly prohibited without
-the express written consent of LuxProvide.
-
-All rights reserved.
-------------------------------------------------------------------------------
+Contributions:
+    - Original implementation: Marco Magliulo (LuxProvide)
+    - Minor modifications and improvements: Tom Walter (LuxProvide)
 """
-
 import os
 import shutil
 import tempfile

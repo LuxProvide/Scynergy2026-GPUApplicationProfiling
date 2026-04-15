@@ -1,12 +1,12 @@
-# evaluation_utils.py
-
+"""
+Author: Marco Magliulo
+Affiliation: LuxProvide
+"""
 import os
 from typing import List, Optional, Tuple
-
 import torch
 import torch.distributed as dist
 from distribute_utils import init_distributed, cleanup, is_main_process
-
 
 def test_best_checkpoint(
     eval_model: torch.nn.Module,

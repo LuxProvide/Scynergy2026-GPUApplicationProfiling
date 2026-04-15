@@ -1,3 +1,7 @@
+"""
+Author: Marco Magliulo
+Affiliation: LuxProvide
+"""
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import os

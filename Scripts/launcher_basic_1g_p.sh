@@ -1,4 +1,5 @@
 #!/bin/bash -l
+# Author: Marco Magliulo (LuxProvide)
 #SBATCH --job-name=monai_basic_1g_no_p
 #SBATCH --output=monai_basic_1g_no_p.out
 #SBATCH --error=monai_basic_1g_no_p.err

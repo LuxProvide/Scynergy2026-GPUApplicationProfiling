@@ -1,3 +1,10 @@
+
+"""
+Author: Marco Magliulo
+Affiliation: LuxProvide
+"""
+
+
 import os
 import torch.distributed as dist
 from monai.apps import download_and_extract

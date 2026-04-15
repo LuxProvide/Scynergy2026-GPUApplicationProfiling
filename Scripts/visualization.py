@@ -46,8 +46,6 @@ def show_example_images(
     plt.savefig("example_from_mednist_dataset.png")
 
 
-from common_imports import os, plt
-
 
 def write_convergence_plots(
     epoch_loss_values,

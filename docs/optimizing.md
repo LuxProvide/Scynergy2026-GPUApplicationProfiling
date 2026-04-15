@@ -1,5 +1,13 @@
 # Your turn to look at a trace
 
+
+Copy the traces we prepared in your folder 
+
+```bash
+mkdir -p /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/traces
+cp -R /project/home/p201259/materials/15April_GPUApp_Profiling/ProfilingTraces /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/traces
+```
+
 This time, you are in command.
 You will do two things:
 

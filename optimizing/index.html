@@ -1,0 +1,961 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Webinar/Tutorial on how to Profile GPU Apps with NSight-Systems on Meluxina">
+      
+      
+        <meta name="author" content="Marco Magliulo, Emmanuel Kieffer, Xavier Besseron">
+      
+      
+        <link rel="canonical" href="https://luxprovide.github.io/Scynergy2026-GPUApplicationProfiling/optimizing/">
+      
+      
+        <link rel="prev" href="../nsight_systems/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>3️⃣ Optimize a slow PyTorch distributed training - Profiling GPU Apps with NSight-Systems on MeluXina</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#your-turn-to-look-at-a-trace" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Profiling GPU Apps with NSight-Systems on MeluXina" class="md-header__button md-logo" aria-label="Profiling GPU Apps with NSight-Systems on MeluXina" data-md-component="logo">
+      
+  <img src="../assets/LuxProvide_logo_white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Profiling GPU Apps with NSight-Systems on MeluXina
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              3️⃣ Optimize a slow PyTorch distributed training
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Profiling GPU Apps with NSight-Systems on MeluXina" class="md-nav__button md-logo" aria-label="Profiling GPU Apps with NSight-Systems on MeluXina" data-md-component="logo">
+      
+  <img src="../assets/LuxProvide_logo_white.svg" alt="logo">
+
+    </a>
+    Profiling GPU Apps with NSight-Systems on MeluXina
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🏠 Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1️⃣ Settings things up
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nsight_systems/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2️⃣ Getting Started With NSight Systems
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3️⃣ Optimize a slow PyTorch distributed training
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3️⃣ Optimize a slow PyTorch distributed training
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-if-we-try-something-brute-force-and-just-increase-the-number-of-gpus-used-i" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What if we try something brute force and just increase the number of GPUs used i?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-to-change-to-improve-performances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to change to improve performances
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What to change to improve performances">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#your-turn-to-investigate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Your turn to investigate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starting-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#openning-the-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Openning the trace
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-of-trace-with-improved-execution-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example of trace with improved execution time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-we-changed-in-the-code-to-make-it-more-efficient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What we changed in the code to make it more efficient
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What we changed in the code to make it more efficient">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explanation-of-the-changes-the-most-interesting-bit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explanation of the changes (the most interesting bit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#investigate-your-memory-transfer-awesome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Investigate your memory transfer (AWESOME)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaways-in-one-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key takeaways (in one glance)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key takeaways (in one glance)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-profiling-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why profiling matters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recap-of-the-workflow-when-you-need-to-improve-your-code-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recap of the workflow when you need to improve your code performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-can-do-after-this-workshop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you can do after this workshop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#q-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q &amp; A
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thank-you" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thank you
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="your-turn-to-look-at-a-trace">Your turn to look at a trace<a class="headerlink" href="#your-turn-to-look-at-a-trace" title="Permanent link">&para;</a></h1>
+<p>Copy the traces we prepared in your folder</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/project/home/p201259/workspaces/<span class="nv">$USER</span>/Scynergy2026-GPUApplicationProfiling/traces
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>cp<span class="w"> </span>-R<span class="w"> </span>/project/home/p201259/materials/15April_GPUApp_Profiling/ProfilingTraces<span class="w"> </span>/project/home/p201259/workspaces/<span class="nv">$USER</span>/Scynergy2026-GPUApplicationProfiling/traces
+</span></code></pre></div>
+<p>This time, you are in command.
+You will do two things:</p>
+<ul>
+<li>open a trace of the same training but distributed on 4 GPUs and analyze it</li>
+<li>profile a better performing code, open the trace, experiment what happens when the parameters are being changed</li>
+</ul>
+<h2 id="what-if-we-try-something-brute-force-and-just-increase-the-number-of-gpus-used-i">What if we try something brute force and just increase the number of GPUs used i?<a class="headerlink" href="#what-if-we-try-something-brute-force-and-just-increase-the-number-of-gpus-used-i" title="Permanent link">&para;</a></h2>
+<p>Still from your OpenOnDemand terminal run the following:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>nsys-ui<span class="w"> </span><span class="nv">$TRACE_4GPU_BASE</span>
+</span></code></pre></div>
+<p>Your Nsight-systems UI should look like this:</p>
+<p><img alt="alt text" src="../images/image-12.png" /></p>
+<ul>
+<li>Let's take 10 minutes for you to play around with this trace and then we will debrief  </li>
+</ul>
+<h2 id="observations">Observations<a class="headerlink" href="#observations" title="Permanent link">&para;</a></h2>
+<ul>
+<li>We knew that the problem was not coming from the GPU usage when using 1 GPU</li>
+<li>Still, we wanted to see if using 4 GPUs would reduce the training time</li>
+<li>Obviously, still a lot of gaps in the individual activity of the GPU in the distributed training</li>
+<li>We just duplicated the problem</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th style="text-align: right;">Time per Epoch</th>
+<th style="text-align: right;">Speedup vs. 1 GPU</th>
+<th style="text-align: right;">Scaling Efficiency</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 GPU</td>
+<td style="text-align: right;">217 s</td>
+<td style="text-align: right;">1.00×</td>
+<td style="text-align: right;">100.0%</td>
+</tr>
+<tr>
+<td>4 GPUs</td>
+<td style="text-align: right;">179 s</td>
+<td style="text-align: right;">1.21×</td>
+<td style="text-align: right;">30.3%</td>
+</tr>
+</tbody>
+</table>
+<p>At this point we can state that:</p>
+<ul>
+<li>⚠️ 4x more GPU power but 21% speedup only  </li>
+<li>⚠️ My ennemy is still the same: the dataloader  </li>
+</ul>
+<hr />
+<h2 id="what-to-change-to-improve-performances">What to change to improve performances<a class="headerlink" href="#what-to-change-to-improve-performances" title="Permanent link">&para;</a></h2>
+<h3 id="your-turn-to-investigate">Your turn to investigate<a class="headerlink" href="#your-turn-to-investigate" title="Permanent link">&para;</a></h3>
+<ul>
+<li>This time you are totally in command. You will</li>
+<li>collect a trace</li>
+<li>analyze it</li>
+<li>find what is/are the bottleneck(s)</li>
+<li>modify the code accordingly</li>
+</ul>
+<hr />
+<h3 id="starting-point">Starting point<a class="headerlink" href="#starting-point" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>/project/home/p201259/workspaces/<span class="nv">$USER</span>/Scynergy2026-GPUApplicationProfiling/Script
+</span></code></pre></div>
+<ul>
+<li>Python script to modify: <code>script_modded_4g.py</code></li>
+<li>Launcher to modify: <code>source launcher_modded_4g_p.sh</code></li>
+</ul>
+<p>In particular, play with the following variables</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BATCH_SIZE</span><span class="o">=</span>...
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NUM_WORKERS</span><span class="o">=</span>...
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PRE_FETCH_FACTOR</span><span class="o">=</span>...
+</span></code></pre></div>
+<p>To launch the script <strong>from the OpenOnDemand</strong> terminal:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>bash<span class="w"> </span>launcher_modded_4g_p.sh<span class="w"> </span>
+</span></code></pre></div>
+<div style="background-color:#ffeeba; padding:10px; border-left:5px solid #f0ad4e;">
+<strong>⚠️ Warning</strong><br>
+The performance in OpenOnDemand are lower than the one you would get from a standard `salloc` interactive session or via `sbatch`
+
+If possible, try to run the script **outside** of OpenOnDemand.
+</div>
+
+<hr />
+<h3 id="openning-the-trace">Openning the trace<a class="headerlink" href="#openning-the-trace" title="Permanent link">&para;</a></h3>
+<p>When your profiling is done, at the end of the output you should get something like:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>...
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>train<span class="w"> </span>completed,<span class="w"> </span>best_metric:<span class="w"> </span><span class="m">0</span>.8383<span class="w"> </span>at<span class="w"> </span>epoch:<span class="w"> </span><span class="m">1</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Generated:
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">        </span>.../modded_4g_no_p.mel2129.24037.nsys-rep
+</span></code></pre></div>
+<p>Get the path of the <code>.nsys-rep</code> file and open it with:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>nsys-ui<span class="w"> </span><span class="nv">$THEPATH</span>.nsys-rep
+</span></code></pre></div>
+<hr />
+<h2 id="example-of-trace-with-improved-execution-time">Example of trace with improved execution time<a class="headerlink" href="#example-of-trace-with-improved-execution-time" title="Permanent link">&para;</a></h2>
+<p><img alt="alt text" src="../images/image-14.png" /></p>
+<h2 id="what-we-changed-in-the-code-to-make-it-more-efficient">What we changed in the code to make it more efficient<a class="headerlink" href="#what-we-changed-in-the-code-to-make-it-more-efficient" title="Permanent link">&para;</a></h2>
+<h3 id="diagnostic">Diagnostic<a class="headerlink" href="#diagnostic" title="Permanent link">&para;</a></h3>
+<ul>
+<li>We analyzed the trace, identified the main bottleneck, and then applied changes, if possible <strong>one by one</strong> ! If you don't do this you might miss what is truly changing your performance  </li>
+<li>In the case we presented, the problem was obvious because:</li>
+<li>with <code>nvtx</code> ranges we identified what specific part of the training loop was the issue</li>
+<li>we had large GPU gaps at every step</li>
+<li>During the dataloading, we hypothetized that either the CPU was doing something to the data before the GPU could work on it, or it was due to slow I/O.</li>
+</ul>
+<h3 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h3>
+<p>With the previous diagnostic in mind we made the following changes:</p>
+<ul>
+<li>Use the <strong><code>CacheDataset</code></strong> of MonAI.</li>
+<li>Tweak the dataloader: we increased the number of workers that PyTorch uses.</li>
+<li>Included Test <strong>pinning / non-blocking copies</strong>,</li>
+</ul>
+<h3 id="explanation-of-the-changes-the-most-interesting-bit">Explanation of the changes (the most interesting bit)<a class="headerlink" href="#explanation-of-the-changes-the-most-interesting-bit" title="Permanent link">&para;</a></h3>
+<p><strong><code>CacheDataset</code></strong>
+By using this, and if you have enough RAM to do so, your transformed Dataset goes onto the RAM.
+    - launching your training is longer but afterwards your perf. gains are substantial
+    - your dataset is fetched from the RAM and not from the filesystem!</p>
+<p><img alt="alt text" src="../images/cachedDataset.png" /></p>
+<p>Caching the Dataset consume some memory on the host RAM but not the GPU VRAM !</p>
+<p><strong>Tweaking the <code>Dataloader</code></strong></p>
+<ul>
+<li><code>num_workers</code> controls how many CPU <strong>processes</strong> PyTorch’s DataLoader uses to prepare batches in parallel.</li>
+<li>with <code>num_workers=0</code>, everything runs in the main process → slow and blocking</li>
+<li>with <code>num_workers</code> being too high, there might be high RAM usage</li>
+</ul>
+<p><strong>Pinning memory</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">DataLoader</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Non-blocking copies</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">images</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">non_blocking</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Allows the CPU to GPU transfer to happen asynchronously:</p>
+<p>-&gt; With pinned memory and non-blocking copies, data transfer overlaps computation</p>
+<p>The gains important with this trick when:</p>
+<ul>
+<li>this is impactful when having large batches like 3D images (here batches are rather small)</li>
+<li>CPU processing is not the bottleneck</li>
+</ul>
+<h3 id="investigate-your-memory-transfer-awesome">Investigate your memory transfer (AWESOME)<a class="headerlink" href="#investigate-your-memory-transfer-awesome" title="Permanent link">&para;</a></h3>
+<p>You want to know more about your datatransfer?
+It's possible with NSight</p>
+<p><img alt="memory transfer" src="images/memory_transfer.png" /></p>
+<p>If you select the event on the timeline and open the stats menu you can see something like this:</p>
+<p><img alt="detail HtoD" src="../images/HtoD.png" /></p>
+<p>What are those 16 Mb?
+Let's think about it"</p>
+<ul>
+<li>From MedNIST, a single 64×64 PNG is <code>64 × 64 × 1 byte = 4096 bytes ≈ 4 kB</code></li>
+<li>I used batches of 4096 images:  <code>1024 × 16 kB = 16384 kB ≈ 16 MB</code></li>
+</ul>
+<p>This is exaclty what we see on the GUI</p>
+<h2 id="key-takeaways-in-one-glance">Key takeaways (in one glance)<a class="headerlink" href="#key-takeaways-in-one-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Script version</th>
+<th># GPUs</th>
+<th>Batch size</th>
+<th>Time per epoch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline</td>
+<td>Initial script</td>
+<td>1 GPU</td>
+<td>Small</td>
+<td><strong>217 s / epoch</strong></td>
+</tr>
+<tr>
+<td>Parallel (inefficient)</td>
+<td>Initial script</td>
+<td>4 GPUs</td>
+<td>Small</td>
+<td><strong>~180 s / epoch</strong></td>
+</tr>
+<tr>
+<td>Optimized</td>
+<td>Modified script</td>
+<td>4 GPUs</td>
+<td>Medium</td>
+<td><strong>~9 s / epoch</strong></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p><strong>1 → 4 GPUs without code changes</strong> gives only a <strong>modest speedup</strong><br />
+    (217 → ~180 s): scaling limited by input pipeline, batch size, and inefficiencies.</p>
+</li>
+<li>
+<p><strong>Script + batch size optimization</strong> unlocks the hardware:</p>
+</li>
+<li>better GPU utilization</li>
+<li>Proper data pipeline overlap</li>
+<li>
+<p>Better gpU usage</p>
+</li>
+<li>
+<p>End result:</p>
+</li>
+<li><strong>≈ 24× faster</strong> than the original 1‑GPU baseline</li>
+<li><strong>≈ 20× faster</strong> than the naïve 4‑GPU run</li>
+</ul>
+<h3 id="why-profiling-matters">Why profiling matters<a class="headerlink" href="#why-profiling-matters" title="Permanent link">&para;</a></h3>
+<p>Without the trace, we could easily have optimized the wrong thing:</p>
+<ul>
+<li>tried to scale to more GPUs too early (we did this intentionnally)</li>
+<li>focused on CUDA micro-optimizations first</li>
+<li>blamed distributed training before understanding the single-GPU case</li>
+</ul>
+<h3 id="recap-of-the-workflow-when-you-need-to-improve-your-code-performance">Recap of the workflow when you need to improve your code performance<a class="headerlink" href="#recap-of-the-workflow-when-you-need-to-improve-your-code-performance" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Prepare a <strong>representative but smaller</strong> test case if the code is too long to execute  </li>
+<li>Run Nsight Systems for a <strong>global view</strong> on the base script</li>
+<li>Identify the 2–3 main bottlenecks from the trace</li>
+<li>Implement optimizations → re‑run profiling</li>
+<li>Carefully review what you have changed. Try not to change only one thing at a time</li>
+<li>Ensure that your modifications did not affect the code functionnality (for example convergence of training)</li>
+<li>Once satisfied, scale back up to full production sizes.</li>
+</ol>
+<hr />
+<h2 id="what-you-can-do-after-this-workshop">What you can do after this workshop<a class="headerlink" href="#what-you-can-do-after-this-workshop" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Apply Nsight to your <strong>own applications</strong> on MeluXina to produce traces  </li>
+</ul>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>nsys-profile<span class="w"> </span><span class="si">${</span><span class="nv">NSYS_OPTIONS</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">YOURBIN</span><span class="si">}</span>
+</span></code></pre></div>
+<p>or if <code>srun</code> is available (outside of OpenOnDemand):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>srun<span class="w"> </span><span class="si">${</span><span class="nv">SRUN_OPTIONS</span><span class="si">}</span><span class="w"> </span>nsys-profile<span class="w"> </span><span class="si">${</span><span class="nv">NSYS_OPTIONS</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">YOURBIN</span><span class="si">}</span>
+</span></code></pre></div>
+<ul>
+<li>Performance optimization guided by profiling results</li>
+</ul>
+<hr />
+<h2 id="q-a">Q &amp; A<a class="headerlink" href="#q-a" title="Permanent link">&para;</a></h2>
+<p>Questions, specific applications, or issues you’d like to discuss?</p>
+<hr />
+<h2 id="thank-you">Thank you<a class="headerlink" href="#thank-you" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Useful resources:</li>
+<li><a href="https://docs.nvidia.com/nsight-systems/UserGuide/index.html">NSight documentation</a></li>
+<li>
+<p><a href="https://docs.lxp.lu/">Meluxina Documentation</a></p>
+</li>
+<li>
+<p>Contact:  </p>
+</li>
+<li>servicedesk [at] lxp.lu</li>
+</ul>
+<!-- 
+---
+
+# Meluxina GPU node Hardware 
+
+- CPU: 2× AMD 7452 EPYC ROME CPUs: 32 cores each
+- GPUs:
+    - 4× NVIDIA A100 GPUs on each node
+      - 40 GB HBM2 each (the so-called VRAM)
+    - NVLink between GPUs **of the same node**
+- ~512 GB RAM 
+
+---
+
+# Meluxina GPU node Hardware 
+
+- Storage / FS
+    - Parallel filesystem (Lustre) for scratch/project storage
+    - Local SSD for node‑local temporary data ~1.8 Tb 
+- High‑speed HDR/InfiniBand (200 Gb/s ) between nodes
+
+---
+
+# Zoom on a dataloading part of the training 
+
+![width:1000px](/docs/images/image-15.png) -->
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../nsight_systems/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 2️⃣ Getting Started With NSight Systems">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                2️⃣ Getting Started With NSight Systems
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.expand", "navigation.footer", "navigation.sections", "navigation.path", "toc.integrate", "content.code.copy", "content.code.select", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../js/open_in_new_tab.js"></script>
+      
+    
+  </body>
+</html>

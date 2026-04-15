@@ -10,9 +10,9 @@ You will do two things:
 
 Still from your OpenOnDemand terminal run the following:
 
-```bash
-nsys-ui $TRACE_4GPU_BASE
-```
+  ```bash
+  nsys-ui $TRACE_4GPU_BASE
+  ```
 
 Your Nsight-systems UI should look like this:
 
@@ -53,26 +53,26 @@ At this point we can state that:
 
 ### Starting point
 
-```bash
-cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
-```
+  ```bash
+  cd /project/home/p201259/workspaces/$USER/Scynergy2026-GPUApplicationProfiling/Script
+  ```
 
 - Python script to modify: `script_modded_4g.py`
 - Launcher to modify: `source launcher_modded_4g_p.sh`
 
 In particular, play with the following variables
 
-```bash
-export BATCH_SIZE=...
-export NUM_WORKERS=...
-export PRE_FETCH_FACTOR=...
-```
+  ```bash
+  export BATCH_SIZE=...
+  export NUM_WORKERS=...
+  export PRE_FETCH_FACTOR=...
+  ```
 
 To launch the script **from the OpenOnDemand** terminal:
 
-```bash
-bash launcher_modded_4g_p.sh 
-```
+  ```bash
+  bash launcher_modded_4g_p.sh 
+  ```
 
 <div style="background-color:#ffeeba; padding:10px; border-left:5px solid #f0ad4e;">
 <strong>⚠️ Warning</strong><br>
@@ -85,18 +85,22 @@ If possible, try to run the script **outside** of OpenOnDemand.
 
 ### Openning the trace
 
-```bash
-sys-rep
-train completed, best_metric: 0.8383 at epoch: 1
-Generated:
-        .../modded_4g_no_p.mel2129.24037.nsys-rep
-```
+When your profiling is done, at the end of the output you should get something like:
+
+  ```bash
+
+  ...
+
+  train completed, best_metric: 0.8383 at epoch: 1
+  Generated:
+          .../modded_4g_no_p.mel2129.24037.nsys-rep
+  ```
 
 Get the path of the ``.nsys-rep`` file and open it with:
 
-```bash
-nsys-ui $THEPATH.nsys-rep
-```
+  ```bash
+  nsys-ui $THEPATH.nsys-rep
+  ```
 
 ---
 
@@ -104,11 +108,9 @@ nsys-ui $THEPATH.nsys-rep
 
 ![alt text](images/image-14.png)
 
-## Conclusion
+## What we changed in the code to make it more efficient
 
-### What we changed in the code to make it more efficient
-
-#### Diagnostic
+### Diagnostic
 
 - We analyzed the trace, identified the main bottleneck, and then applied changes, if possible **one by one** ! If you don't do this you might miss what is truly changing your performance  
 - In the case we presented, the problem was obvious because:
@@ -116,7 +118,7 @@ nsys-ui $THEPATH.nsys-rep
   - we had large GPU gaps at every step
 - During the dataloading, we hypothetized that either the CPU was doing something to the data before the GPU could work on it, or it was due to slow I/O.
 
-#### Changes  
+### Changes  
 
 With the previous diagnostic in mind we made the following changes:
 
@@ -124,7 +126,7 @@ With the previous diagnostic in mind we made the following changes:
 - Tweak the dataloader: we increased the number of workers that PyTorch uses.
 - Included Test **pinning / non-blocking copies**,
 
-##### Explanation of the changes (the most interesting bit)
+### Explanation of the changes (the most interesting bit)
 
 **`CacheDataset`**
 By using this, and if you have enough RAM to do so, your transformed Dataset goes onto the RAM.
@@ -143,15 +145,15 @@ Caching the Dataset consume some memory on the host RAM but not the GPU VRAM !
 
 **Pinning memory**
 
-```python
-DataLoader(..., pin_memory=True)
-```
+  ```python
+  DataLoader(..., pin_memory=True)
+  ```
 
 **Non-blocking copies**
 
-```python
-images = images.to(device, non_blocking=True)
-```
+  ```python
+  images = images.to(device, non_blocking=True)
+  ```
 
 Allows the CPU to GPU transfer to happen asynchronously:
 
@@ -171,7 +173,7 @@ It's possible with NSight
 
 If you select the event on the timeline and open the stats menu you can see something like this:
 
-![detail HtoD](image-2.png)
+![detail HtoD](images/HtoD.png)
 
 What are those 16 Mb?
 Let's think about it"
@@ -181,7 +183,7 @@ Let's think about it"
 
 This is exaclty what we see on the GUI
 
-### Key takeaways (in one glance)
+## Key takeaways (in one glance)
 
 | Scenario               | Script version  | # GPUs | Batch size | Time per epoch      |
 | ---------------------- | --------------- | ------ | ---------- | ------------------- |
@@ -201,7 +203,7 @@ This is exaclty what we see on the GUI
   - **≈ 24× faster** than the original 1‑GPU baseline
   - **≈ 20× faster** than the naïve 4‑GPU run
 
-## Why profiling still mattered
+### Why profiling matters
 
 Without the trace, we could easily have optimized the wrong thing:
 

@@ -39,7 +39,7 @@ else
 
     source "$VENV_DIR/$VENV_NAME/bin/activate"
     pip install --upgrade pip
-    check_that_packages_are_installed="true"
+    check_that_packages_are_installed="false"
     if [ "$check_that_packages_are_installed" = "true" ]; then
         packages=("monai-weekly[pillow,tqdm]" "matplotlib" "tensorboard" "scikit-learn" "numpy" "requests" "torchvision" "black" "pylint" "autonvtx")
 
